@@ -1,21 +1,32 @@
-// src/context/AuthContext.jsx
-import React, { createContext, useState, useContext } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 
-// create the context
 const UserContext = createContext(null);
 
-// provider component
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
+  // ✅ load user from localStorage on refresh
+  useEffect(() => {
+    const saved = localStorage.getItem("user");
+    if (saved) {
+      try {
+        setUser(JSON.parse(saved));
+      } catch {
+        localStorage.removeItem("user");
+      }
+    }
+  }, []);
+
   const login = (userData) => {
     setUser(userData);
-    // optional: localStorage.setItem("token", userData.token);
+    localStorage.setItem("user", JSON.stringify(userData)); // ✅ keep synced
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("ems_email"); // optional
   };
 
   return (
@@ -25,7 +36,6 @@ const AuthProvider = ({ children }) => {
   );
 };
 
-// custom hook to use the auth context
 export const useUserAuth = () => useContext(UserContext);
 
 export default AuthProvider;

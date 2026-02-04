@@ -1,22 +1,21 @@
-// controllers/authController.js
 import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs"; // ✅ use bcryptjs (same as in your seeder)
+import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 
-const login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // ✅ basic validation
-    if (!email||!password) {
+    // 1) Validate
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
         error: "Email and password are required",
       });
     }
 
-    // ✅ find user
-    const user = await User.findOne({ email });
+    // 2) Find user
+    const user = await User.findOne({ email: email.trim().toLowerCase() });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -24,23 +23,31 @@ const login = async (req, res) => {
       });
     }
 
-    // ✅ check password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    // 3) Compare hashed password (stored in user.password)
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) {
       return res.status(401).json({
         success: false,
         error: "Wrong Password",
       });
     }
 
-    // ✅ create JWT
+    // 4) JWT secret check
+    if (!process.env.JWT_KEY) {
+      return res.status(500).json({
+        success: false,
+        error: "JWT_KEY missing in .env",
+      });
+    }
+
+    // 5) Create token
     const token = jwt.sign(
       { _id: user._id, role: user.role },
-      process.env.JWT_KEY, // make sure JWT_KEY exists in .env
+      process.env.JWT_KEY,
       { expiresIn: "10d" }
     );
 
-    // ✅ send response
+    // 6) Return user + token
     return res.status(200).json({
       success: true,
       token,
@@ -48,16 +55,14 @@ const login = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: user.role, // ✅ "admin" | "employee"
       },
     });
-  } catch (error) {
-    console.error("Login error:", error);
+  } catch (err) {
+    console.error("Login error:", err);
     return res.status(500).json({
       success: false,
-      error: error.message || "Server Error",
+      error: err.message || "Server Error",
     });
   }
 };
-
-export { login };

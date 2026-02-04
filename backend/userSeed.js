@@ -1,10 +1,9 @@
-// userSeed.js  (ESM version)
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 import User from "./models/User.js";
 
-dotenv.config(); // load .env
+dotenv.config();
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/EMS";
 
@@ -16,7 +15,7 @@ async function seedAdmin() {
     const existingAdmin = await User.findOne({ email: "admin@ems.com" });
 
     if (existingAdmin) {
-      console.log("ℹ️ Admin user already exists:", existingAdmin.email);
+      console.log("ℹ️ Admin already exists:", existingAdmin.email);
       process.exit(0);
     }
 
@@ -29,10 +28,10 @@ async function seedAdmin() {
       role: "admin",
     });
 
-    console.log("✅ Admin user created:", adminUser.email);
+    console.log("✅ Admin created:", adminUser.email);
     process.exit(0);
   } catch (err) {
-    console.error(" Seeding error:", err);
+    console.error("❌ Seeding error:", err);
     process.exit(1);
   }
 }

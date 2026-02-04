@@ -1,7 +1,8 @@
 // src/pages/AdminDashboard.jsx
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+import axios from "axios";
 import {
   LayoutDashboard,
   Users,
@@ -21,27 +22,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 
-// --- demo stats (replace with real API data later) ---
-const statsTop = [
-  {
-    label: "Total Employees",
-    value: 48,
-    accent: "bg-emerald-500",
-    icon: <Users className="w-5 h-5 text-white" />,
-  },
-  {
-    label: "Total Departments",
-    value: 7,
-    accent: "bg-amber-500",
-    icon: <Building2 className="w-5 h-5 text-white" />,
-  },
-  {
-    label: "Monthly Payroll",
-    value: "$25,800",
-    accent: "bg-rose-500",
-    icon: <WalletCards className="w-5 h-5 text-white" />,
-  },
-];
+const API_BASE = "http://localhost:5000";
 
 const leaveDetails = [
   {
@@ -100,29 +81,91 @@ const attendanceDetails = [
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const theme = useTheme?.();
   const darkMode = theme?.darkMode ?? false;
   const toggleTheme = theme?.toggleTheme ?? (() => {});
 
-  const bgMain = darkMode
-    ? "bg-slate-950 text-slate-50"
-    : "bg-slate-100 text-slate-900";
-  const cardBg = darkMode
-    ? "bg-slate-900/80 border-slate-800"
-    : "bg-white border-slate-200";
+  const bgMain = darkMode ? "bg-slate-950 text-slate-50" : "bg-slate-100 text-slate-900";
+  const cardBg = darkMode ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200";
   const subText = darkMode ? "text-slate-400" : "text-slate-600";
 
-  // Sidebar items with paths
+  // ✅ totals from backend
+  const [totalEmployees, setTotalEmployees] = useState(0);
+  const [totalDepartments, setTotalDepartments] = useState(0);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  const token = useMemo(() => localStorage.getItem("token"), []);
+
+  const axiosAuth = useMemo(() => {
+    return axios.create({
+      baseURL: API_BASE,
+      headers: { Authorization: token ? `Bearer ${token}` : "" },
+    });
+  }, [token]);
+
+  // ✅ fetch counts
+  const fetchTotals = async () => {
+    try {
+      setLoadingStats(true);
+
+      // employees endpoint (admin)
+      const employeesRes = await axiosAuth.get("/api/admin/employees");
+      const employees = employeesRes?.data?.employees || [];
+      setTotalEmployees(Array.isArray(employees) ? employees.length : 0);
+
+      // departments endpoint (admin)
+      const depRes = await axiosAuth.get("/api/departments");
+      const departments = depRes?.data?.departments || [];
+      setTotalDepartments(Array.isArray(departments) ? departments.length : 0);
+    } catch (err) {
+      console.error("Dashboard totals error:", err);
+      // keep totals as-is (0) if error
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTotals();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ✅ Top stats now dynamic
+  const statsTop = useMemo(() => {
+    return [
+      {
+        label: "Total Employees",
+        value: loadingStats ? "..." : totalEmployees,
+        accent: "bg-emerald-500",
+        icon: <Users className="w-5 h-5 text-white" />,
+      },
+      {
+        label: "Total Departments",
+        value: loadingStats ? "..." : totalDepartments,
+        accent: "bg-amber-500",
+        icon: <Building2 className="w-5 h-5 text-white" />,
+      },
+      {
+        label: "Monthly Payroll",
+        value: "$25,800", // keep as demo until you build payroll module
+        accent: "bg-rose-500",
+        icon: <WalletCards className="w-5 h-5 text-white" />,
+      },
+    ];
+  }, [loadingStats, totalEmployees, totalDepartments]);
+
+  // ✅ Sidebar items (FIXED dashboard path)
   const menuItems = [
     {
       label: "Dashboard",
       icon: <LayoutDashboard className="w-4 h-4" />,
-      path: "/admin-dashboard",
+      path: "/admindashboard", // ✅ FIXED (matches App.jsx)
     },
     {
       label: "Employees",
       icon: <Users className="w-4 h-4" />,
-      path: "/admin/employees", // 👈 your EmployeeList route
+      path: "/admin/employees",
     },
     {
       label: "Departments",
@@ -147,9 +190,8 @@ const AdminDashboard = () => {
   ];
 
   const isActivePath = (itemPath) => {
-    // Highlight exact match AND nested routes (e.g. /admin/employees/123)
-    if (itemPath === "/admin-dashboard") {
-      return location.pathname === "/admin-dashboard";
+    if (itemPath === "/admindashboard") {
+      return location.pathname === "/admindashboard";
     }
     return location.pathname.startsWith(itemPath);
   };
@@ -167,9 +209,7 @@ const AdminDashboard = () => {
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.28 }}
         className={`hidden md:flex w-60 flex-col border-r ${
-          darkMode
-            ? "border-slate-800 bg-slate-950"
-            : "border-slate-200 bg-slate-900 text-slate-50"
+          darkMode ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-slate-900 text-slate-50"
         }`}
       >
         <div className="px-5 py-4 border-b border-slate-800">
@@ -212,38 +252,26 @@ const AdminDashboard = () => {
 
       {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col">
-        {/* TOP BAR with theme toggle */}
+        {/* TOP BAR */}
         <div
           className={`w-full border-b ${
-            darkMode
-              ? "border-slate-800 bg-slate-900/80"
-              : "border-slate-200 bg-emerald-600/95"
+            darkMode ? "border-slate-800 bg-slate-900/80" : "border-slate-200 bg-emerald-600/95"
           } backdrop-blur`}
         >
           <div className="flex items-center justify-between px-4 py-3 md:px-8">
             <div className="flex flex-col">
-              <span className="text-xs uppercase tracking-[0.22em] text-slate-100/90">
-                Dashboard
-              </span>
-              <span className="text-sm md:text-base font-semibold text-white">
-                Welcome, Admin
-              </span>
+              <span className="text-xs uppercase tracking-[0.22em] text-slate-100/90">Dashboard</span>
+              <span className="text-sm md:text-base font-semibold text-white">Welcome, Admin</span>
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Theme toggle */}
               <button
                 onClick={toggleTheme}
                 className="inline-flex items-center justify-center rounded-full border border-white/25 bg-slate-950/25 px-2.5 py-1.5 text-xs text-slate-50 hover:bg-slate-950/45 transition"
               >
-                {darkMode ? (
-                  <SunMedium className="w-4 h-4" />
-                ) : (
-                  <MoonStar className="w-4 h-4" />
-                )}
+                {darkMode ? <SunMedium className="w-4 h-4" /> : <MoonStar className="w-4 h-4" />}
               </button>
 
-              {/* Logout */}
               <button
                 onClick={() => navigate("/login")}
                 className="inline-flex items-center gap-2 rounded-full bg-slate-950/30 px-4 py-1.5 text-xs font-medium text-slate-50 border border-white/20 hover:bg-slate-950/45 transition"
@@ -259,9 +287,17 @@ const AdminDashboard = () => {
         <div className="flex-1 px-4 md:px-8 py-5 md:py-7 space-y-6 md:space-y-7">
           {/* DASHBOARD OVERVIEW */}
           <div>
-            <h2 className="text-lg md:text-xl font-semibold tracking-tight mb-3">
-              Dashboard Overview
-            </h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg md:text-xl font-semibold tracking-tight">Dashboard Overview</h2>
+
+              <button
+                onClick={fetchTotals}
+                className="text-xs px-3 py-2 rounded-xl border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10 transition"
+              >
+                Refresh Totals
+              </button>
+            </div>
+
             <div className="grid gap-4 md:gap-5 grid-cols-1 md:grid-cols-3">
               {statsTop.map((stat, i) => (
                 <motion.div
@@ -272,17 +308,11 @@ const AdminDashboard = () => {
                   className={`flex items-center justify-between rounded-2xl border px-4 py-3.5 md:px-5 md:py-4 shadow-sm ${cardBg}`}
                 >
                   <div className="flex flex-col gap-1">
-                    <span className={`text-xs font-medium ${subText}`}>
-                      {stat.label}
-                    </span>
-                    <span className="text-xl md:text-2xl font-semibold tracking-tight">
-                      {stat.value}
-                    </span>
+                    <span className={`text-xs font-medium ${subText}`}>{stat.label}</span>
+                    <span className="text-xl md:text-2xl font-semibold tracking-tight">{stat.value}</span>
                   </div>
                   <div className="flex items-center justify-center rounded-xl p-3 shadow-inner text-white">
-                    <div
-                      className={`${stat.accent} rounded-xl p-2.5 flex items-center justify-center`}
-                    >
+                    <div className={`${stat.accent} rounded-xl p-2.5 flex items-center justify-center`}>
                       {stat.icon}
                     </div>
                   </div>
@@ -291,9 +321,8 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* LEAVE & ATTENDANCE */}
+          {/* LEAVE & ATTENDANCE (still demo until you build backend) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-6">
-            {/* Leave Details */}
             <motion.div
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
@@ -309,19 +338,12 @@ const AdminDashboard = () => {
               </div>
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {leaveDetails.map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex items-center justify-between px-4 py-3 md:px-5"
-                  >
+                  <div key={item.label} className="flex items-center justify-between px-4 py-3 md:px-5">
                     <div className="flex items-center gap-3">
-                      <div className={`rounded-lg p-2.5 ${item.accent} shadow-inner`}>
-                        {item.icon}
-                      </div>
+                      <div className={`rounded-lg p-2.5 ${item.accent} shadow-inner`}>{item.icon}</div>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">{item.label}</span>
-                        <span className={`text-xs ${subText}`}>
-                          Across all departments
-                        </span>
+                        <span className={`text-xs ${subText}`}>Across all departments</span>
                       </div>
                     </div>
                     <span className="text-lg font-semibold">{item.value}</span>
@@ -330,7 +352,6 @@ const AdminDashboard = () => {
               </div>
             </motion.div>
 
-            {/* Attendance Summary */}
             <motion.div
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
@@ -346,19 +367,12 @@ const AdminDashboard = () => {
               </div>
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {attendanceDetails.map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex items-center justify-between px-4 py-3 md:px-5"
-                  >
+                  <div key={item.label} className="flex items-center justify-between px-4 py-3 md:px-5">
                     <div className="flex items-center gap-3">
-                      <div className={`rounded-lg p-2.5 ${item.accent} shadow-inner`}>
-                        {item.icon}
-                      </div>
+                      <div className={`rounded-lg p-2.5 ${item.accent} shadow-inner`}>{item.icon}</div>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">{item.label}</span>
-                        <span className={`text-xs ${subText}`}>
-                          Auto-synced from timesheets
-                        </span>
+                        <span className={`text-xs ${subText}`}>Auto-synced from timesheets</span>
                       </div>
                     </div>
                     <span className="text-lg font-semibold">{item.value}</span>
