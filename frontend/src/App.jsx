@@ -12,6 +12,10 @@ import AddNewLeave from "./pages/AddNewLeave";
 import EmployeeSettings from "./pages/EmployeeSettings";
 import EmployeeSalary from "./pages/EmployeeSalary";
 import AdminLeaveRequests from "./pages/AdminLeaveRequests";
+import PunchClock from "./pages/PunchClock";
+import AdminAttendanceToday from "./pages/AdminAttendanceToday";
+
+
 
 function App() {
   return (
@@ -67,6 +71,16 @@ function App() {
             <ProtectedRoute allowRoles={["admin"]}>
               <AdminSalary />
             </ProtectedRoute>
+          
+          }
+
+        />
+        <Route
+          path="/admin/punch"
+          element={
+            <ProtectedRoute allowRoles={["admin"]}>
+              < AdminAttendanceToday/>
+            </ProtectedRoute>
           }
         />
 
@@ -112,6 +126,10 @@ function App() {
           }
         />
 
+<Route path="/punch-clock" element={  
+  <ProtectedRoute allowRoles={["employee"]}>
+              <PunchClock/>
+            </ProtectedRoute>}/>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

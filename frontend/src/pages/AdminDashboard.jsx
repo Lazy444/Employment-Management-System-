@@ -19,6 +19,7 @@ import {
   Clock4,
   SunMedium,
   MoonStar,
+  Clock,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 
@@ -186,6 +187,11 @@ const AdminDashboard = () => {
       label: "Settings",
       icon: <Settings className="w-4 h-4" />,
       path: "/admin/settings",
+    },
+    {
+      label: "Punch",
+      icon: <Clock className="w-4 h-4" />,
+      path: "/admin/punch",
     },
   ];
 

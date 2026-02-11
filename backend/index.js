@@ -9,7 +9,8 @@ import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import employeeRoutes from "./routes/employeeRoutes.js";
 import departmentRoutes from "./routes/departmentRoutes.js";
-
+import attendanceRoutes from "./routes/attendanceRoutes.js";
+import adminAttendanceRoutes from "./routes/adminAttendanceRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -30,6 +31,8 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/departments", departmentRoutes);
 
 app.use("/api/employees", employeeRoutes);
+app.use("/api/attendance", attendanceRoutes);
+app.use("/api/admin/attendance", adminAttendanceRoutes);
 
 
 // ✅ base route test

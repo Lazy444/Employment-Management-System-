@@ -15,6 +15,7 @@ import {
   SunMedium,
   MoonStar,
   Loader2,
+  Clock,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 
@@ -217,7 +218,16 @@ export default function EmployeeProfile() {
             >
               <Settings className="w-4 h-4 text-slate-200" />
               <span className="text-sm">Setting</span>
-            </button>
+            
+          </button>
+           <button
+              onClick={() => navigate("/punch-clock")}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left bg-white/0 hover:bg-white/5 border border-white/0 hover:border-white/10 transition"
+            >
+              <Clock className="w-4 h-4 text-slate-200" />
+              <span className="text-sm">PunchClock</span>
+            
+          </button>
           </div>
 
           <div className="absolute bottom-5 left-4 right-4">
