@@ -5,6 +5,7 @@ import EmployeeProfile from "./pages/EmpoyeeProfile";
 import EmployeeList from "./pages/EmployeeList";
 import AdminDepartment from "./pages/AdminDepartment";
 import AdminSettings from "./pages/AdminSetting";
+
 import AdminSalary from "./pages/AdminSalary";
 import ProtectedRoute from "./components/ProtectedRoute";
 import EmployeeLeaves from "./pages/EmployeeLeaves";
@@ -14,6 +15,10 @@ import EmployeeSalary from "./pages/EmployeeSalary";
 import AdminLeaveRequests from "./pages/AdminLeaveRequests";
 import PunchClock from "./pages/PunchClock";
 import AdminAttendanceToday from "./pages/AdminAttendanceToday";
+import EmployeeTaskManager from "./pages/EmployeeTaskManager";
+import NepaliEmployeeCalendar from "./pages/NepaliEmployeeCalendar.jsx";
+import AdminMessage from "./pages/AdminMessage.jsx";
+import EmployeeInbox from "./pages/EmployeeInbox.jsx";
 
 
 
@@ -30,6 +35,14 @@ function App() {
           element={
             <ProtectedRoute allowRoles={["admin"]}>
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/admin/inbox"
+          element={
+            <ProtectedRoute allowRoles={["admin"]}>
+              <AdminMessage />
             </ProtectedRoute>
           }
         />
@@ -101,6 +114,22 @@ function App() {
             </ProtectedRoute>
           }
         />
+         <Route
+          path="/message"
+          element={
+            <ProtectedRoute allowRoles={["employee"]}>
+              <EmployeeInbox />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/employeemanager"
+          element={
+            <ProtectedRoute allowRoles={["employee"]}>
+              <EmployeeTaskManager />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/add-new-leave"
           element={
@@ -109,11 +138,20 @@ function App() {
             </ProtectedRoute>
           }
         />
+        
         <Route
           path="/employeesettings"
           element={
             <ProtectedRoute allowRoles={["employee"]}>
               <EmployeeSettings/>
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/calender"
+          element={
+            <ProtectedRoute allowRoles={["employee"]}>
+              <NepaliEmployeeCalendar/>
             </ProtectedRoute>
           }
         />

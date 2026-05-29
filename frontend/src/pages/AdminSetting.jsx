@@ -4,10 +4,11 @@ import {
   ArrowLeft,
   Settings,
   Bell,
-  Shield,
+  ShieldCheck,
   Moon,
   Sun,
   Save,
+  ChevronDown,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
@@ -17,7 +18,7 @@ const AdminSettings = () => {
   const { darkMode, toggleTheme } = useTheme();
 
   const [notifications, setNotifications] = useState(true);
-  const [autoBackup, setAutoBackup] = useState(true);
+  const [showTerms, setShowTerms] = useState(false);
 
   return (
     <div
@@ -28,7 +29,7 @@ const AdminSettings = () => {
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <ArrowLeft
-          className="cursor-pointer hover:opacity-70"
+          className="cursor-pointer hover:opacity-70 transition"
           onClick={() => navigate(-1)}
         />
         <h1 className="text-2xl font-bold tracking-tight">Admin Settings</h1>
@@ -36,22 +37,29 @@ const AdminSettings = () => {
 
       {/* Settings Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Theme */}
+        {/* Appearance */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`rounded-2xl p-6 shadow-xl ${
-            darkMode ? "bg-zinc-900" : "bg-white"
+          className={`rounded-2xl p-6 shadow-xl border ${
+            darkMode
+              ? "bg-zinc-900 border-zinc-800"
+              : "bg-white border-zinc-200"
           }`}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Settings />
-              <h2 className="font-semibold">Appearance</h2>
+              <div>
+                <h2 className="font-semibold">Appearance</h2>
+                <p className="text-sm opacity-70">
+                  Switch between light and dark mode
+                </p>
+              </div>
             </div>
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400"
+              className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400 hover:scale-105 transition"
             >
               {darkMode ? <Sun /> : <Moon />}
             </button>
@@ -63,60 +71,103 @@ const AdminSettings = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className={`rounded-2xl p-6 shadow-xl ${
-            darkMode ? "bg-zinc-900" : "bg-white"
+          className={`rounded-2xl p-6 shadow-xl border ${
+            darkMode
+              ? "bg-zinc-900 border-zinc-800"
+              : "bg-white border-zinc-200"
           }`}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Bell />
-              <h2 className="font-semibold">Notifications</h2>
+              <div>
+                <h2 className="font-semibold">Notifications</h2>
+                <p className="text-sm opacity-70">
+                  Turn system notifications on or off
+                </p>
+              </div>
             </div>
-            <input
-              type="checkbox"
-              checked={notifications}
-              onChange={() => setNotifications(!notifications)}
-              className="w-5 h-5 accent-indigo-500"
-            />
+
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={notifications}
+                onChange={() => setNotifications(!notifications)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 rounded-full bg-zinc-300 dark:bg-zinc-700 peer-checked:bg-indigo-500 transition-all"></div>
+              <div className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white peer-checked:translate-x-5 transition-all"></div>
+            </label>
           </div>
         </motion.div>
 
-        {/* Security */}
+        {/* Terms and Conditions Dropdown */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className={`rounded-2xl p-6 shadow-xl ${
-            darkMode ? "bg-zinc-900" : "bg-white"
+          className={`rounded-2xl p-6 shadow-xl border md:col-span-2 ${
+            darkMode
+              ? "bg-zinc-900 border-zinc-800"
+              : "bg-white border-zinc-200"
           }`}
         >
-          <div className="flex items-center gap-3 mb-3">
-            <Shield />
-            <h2 className="font-semibold">Security</h2>
-          </div>
-          <p className="text-sm opacity-70">
-            Manage password policy, admin access, and system rules.
-          </p>
-        </motion.div>
+          <button
+            onClick={() => setShowTerms(!showTerms)}
+            className="w-full flex items-center justify-between text-left"
+          >
+            <div className="flex items-center gap-3">
+              <ShieldCheck />
+              <div>
+                <h2 className="font-semibold">Terms & Conditions</h2>
+                <p className="text-sm opacity-70">
+                  Review policies, rules, and usage terms
+                </p>
+              </div>
+            </div>
 
-        {/* Backup */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className={`rounded-2xl p-6 shadow-xl ${
-            darkMode ? "bg-zinc-900" : "bg-white"
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold">Auto Backup</h2>
-            <input
-              type="checkbox"
-              checked={autoBackup}
-              onChange={() => setAutoBackup(!autoBackup)}
-              className="w-5 h-5 accent-emerald-500"
-            />
-          </div>
+            <motion.div
+              animate={{ rotate: showTerms ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ChevronDown className="opacity-70" />
+            </motion.div>
+          </button>
+
+          <AnimatePresence>
+            {showTerms && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                animate={{ opacity: 1, height: "auto", marginTop: 16 }}
+                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <div
+                  className={`rounded-xl p-4 text-sm leading-7 ${
+                    darkMode ? "bg-zinc-800 text-zinc-300" : "bg-zinc-50 text-zinc-700"
+                  }`}
+                >
+                  <p>
+                    1. Admins must use the system responsibly and maintain the
+                    privacy of employee data.
+                  </p>
+                  <p>
+                    2. Unauthorized access, modification, or misuse of records
+                    is strictly prohibited.
+                  </p>
+                  <p>
+                    3. Notifications and appearance settings affect only the
+                    current admin experience.
+                  </p>
+                  <p>
+                    4. All system changes should be reviewed before saving to
+                    avoid unintended updates.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
 

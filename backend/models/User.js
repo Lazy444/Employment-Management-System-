@@ -22,7 +22,17 @@ const userSchema = new mongoose.Schema(
       required: true,
       default: "employee",
     },
+hourlyRate: {
+  type: Number,
+  default: 0,
+  min: 0,
+},
 
+monthlySalary: {
+  type: Number,
+  default: 0,
+  min: 0,
+},
     // ✅ matches EmployeeList normalization: u.imageUrl || u.profileImage || u.image
    imageUrl: { type: String, default: "" },
 
@@ -59,6 +69,45 @@ const userSchema = new mongoose.Schema(
       enum: ["Active", "On Leave", "Inactive"],
       default: "Active",
     },
+    settings: {
+  themeMode: {
+    type: String,
+    enum: ["dark", "light"],
+    default: "dark",
+  },
+  emailNotif: {
+    type: Boolean,
+    default: true,
+  },
+  pushNotif: {
+    type: Boolean,
+    default: false,
+  },
+  weeklySummary: {
+    type: Boolean,
+    default: true,
+  },
+  salaryAlert: {
+    type: Boolean,
+    default: true,
+  },
+  leaveApprovalAlert: {
+    type: Boolean,
+    default: true,
+  },
+  twoFA: {
+    type: Boolean,
+    default: false,
+  },
+  showEmail: {
+    type: Boolean,
+    default: true,
+  },
+  showPhone: {
+    type: Boolean,
+    default: true,
+  },
+},
   },
   { timestamps: true }
 );

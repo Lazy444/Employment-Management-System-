@@ -6,7 +6,6 @@ import {
   Search,
   Filter,
   BadgeCheck,
-  Mail,
   Phone,
   Building2,
   UserCircle2,
@@ -24,23 +23,44 @@ import {
   BadgeInfo,
   User,
   Calendar,
+  ClipboardPlus,
+  FileText,
+  Flag,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Download,
+  Grid3x3,
+  List,
+  Heart,
+  Award,
+  RefreshCw,
+  Banknote,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const API_BASE = "http://localhost:5000";
 
-/**
- * EmployeeList (ADMIN)
- * - CRUD employees
- * - fields: image, employeeId, maritalStatus, dob, gender
- * - uses fetch()
- */
+const emptyForm = {
+  name: "",
+  email: "",
+  password: "",
+  phone: "",
+  departmentId: "",
+  status: "Active",
+  role: "employee",
+  employeeId: "",
+  maritalStatus: "Single",
+  dob: "",
+  gender: "Male",
+  hourlyRate: "",
+  monthlySalary: "",
+  imageFile: null,
+  imagePreview: "",
+};
 
-/* =========================================================
-   ✅ EmployeeFormBody OUTSIDE EmployeeList
-   (Fixes input losing focus / remount issue)
-========================================================= */
 const EmployeeFormBody = React.memo(function EmployeeFormBody({
   mode = "create",
   darkMode,
@@ -55,269 +75,202 @@ const EmployeeFormBody = React.memo(function EmployeeFormBody({
   handleImagePick,
   clearPickedImage,
 }) {
-  const isEdit = mode === "edit";
-
   return (
-    <div className="space-y-4">
-      {/* Profile Image */}
-      <div
-        className={`rounded-2xl border p-4 ${
-          darkMode ? "border-slate-700 bg-slate-950/40" : "border-slate-200 bg-slate-50"
-        }`}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <ImageIcon className="w-4 h-4 text-emerald-500" />
+    <div className="space-y-5">
+      <div className={`rounded-2xl border p-5 ${darkMode ? "border-slate-700 bg-slate-950/40" : "border-slate-200 bg-slate-50/50"}`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500">
+              <ImageIcon className="w-5 h-5 text-white" />
+            </div>
             <div>
-              <p className={`text-sm font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>
-                Profile Photo
-              </p>
-              <p className={`text-[11px] ${subText}`}>Optional (JPG/PNG/WEBP)</p>
+              <p className={`text-sm font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>Profile Photo</p>
+              <p className={`text-xs ${subText}`}>JPG, PNG, or WEBP (Max 5MB)</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             {(form.imagePreview || form.imageFile) && (
-              <button
-                type="button"
-                onClick={clearPickedImage}
-                className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition ${
-                  darkMode
-                    ? "bg-slate-900 border border-slate-700 hover:bg-slate-800"
-                    : "bg-white border border-slate-200 hover:bg-slate-100"
-                }`}
-                title="Remove selected image"
-              >
+              <button type="button" onClick={clearPickedImage} className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium ${darkMode ? "bg-slate-900 border border-slate-700 text-white" : "bg-white border border-slate-200 text-slate-700"}`}>
                 <X className="w-4 h-4 text-rose-400" />
                 Remove
               </button>
             )}
 
-            <label
-              className={`cursor-pointer inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition ${
-                darkMode
-                  ? "bg-slate-900 border border-slate-700 hover:bg-slate-800"
-                  : "bg-white border border-slate-200 hover:bg-slate-100"
-              }`}
-            >
-              <Plus className="w-4 h-4 text-emerald-500" />
-              Choose Image
+            <label className={`cursor-pointer inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium ${darkMode ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-emerald-500 text-white"}`}>
+              <Plus className="w-4 h-4" />
+              Upload Image
               <input type="file" accept="image/*" onChange={handleImagePick} className="hidden" />
             </label>
           </div>
         </div>
 
-        <div className="mt-3">
-          {form.imagePreview ? (
-            <div className="relative overflow-hidden rounded-2xl border border-white/10">
-              <img
-                src={resolveImageUrl(form.imagePreview)}
-                alt="Preview"
-                className="h-44 w-full object-cover"
-              />
-              <div className="absolute inset-x-0 bottom-0 bg-black/45 px-3 py-2 text-[11px] text-white">
-                {isEdit ? "Current / New Preview" : "Preview"}
-              </div>
-            </div>
-          ) : (
-            <div
-              className={`flex items-center gap-2 rounded-2xl border px-3 py-4 text-xs ${
-                darkMode
-                  ? "border-slate-700 bg-slate-900/40 text-slate-400"
-                  : "border-slate-200 bg-white text-slate-500"
-              }`}
-            >
-              <ImageIcon className="w-4 h-4" />
-              No image selected
-            </div>
-          )}
-        </div>
+        {form.imagePreview && (
+          <div className="mt-4 relative overflow-hidden rounded-2xl">
+            <img src={resolveImageUrl(form.imagePreview)} alt="Preview" className="h-48 w-full object-cover" />
+          </div>
+        )}
       </div>
 
-      {/* Basic identity */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <label className={`text-xs ${subText}`}>Full Name</label>
-          <input
-            className={`${inputBase} ${inputTheme}`}
-            placeholder="e.g., Sohan Koirala"
-            value={form.name}
-            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className={`text-xs ${subText}`}>Email</label>
-          <input
-            className={`${inputBase} ${inputTheme}`}
-            placeholder="e.g., admin@ems.com"
-            value={form.email}
-            onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-          />
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Field label="Full Name *" value={form.name} onChange={(v) => setForm((p) => ({ ...p, name: v }))} inputBase={inputBase} inputTheme={inputTheme} darkMode={darkMode} />
+        <Field label="Email Address *" type="email" value={form.email} onChange={(v) => setForm((p) => ({ ...p, email: v }))} inputBase={inputBase} inputTheme={inputTheme} darkMode={darkMode} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <label className={`text-xs ${subText}`}>{isEdit ? "New Password (optional)" : "Password"}</label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className={`text-sm font-medium ${darkMode ? "text-slate-200" : "text-slate-700"}`}>{mode === "edit" ? "New Password" : "Password *"}</label>
           <div className="relative">
             <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              className={`w-full pl-9 pr-3 py-2 border rounded-xl outline-none transition ${inputTheme}`}
-              placeholder={isEdit ? "Leave blank to keep current" : "Min 6 characters"}
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
-            />
+            <input className={`w-full pl-10 pr-3 py-2.5 border rounded-xl outline-none ${inputTheme}`} type="password" value={form.password} onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))} placeholder={mode === "edit" ? "Leave blank to keep current" : "Minimum 6 characters"} />
           </div>
         </div>
 
-        {/* ✅ PHONE FIXED (no focus loss, also cleans input) */}
-        <div className="space-y-1">
-          <label className={`text-xs ${subText}`}>Phone (optional)</label>
-          <input
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            className={`${inputBase} ${inputTheme}`}
-            placeholder="e.g., +977 98xxxxxxx"
-            value={form.phone}
-            onChange={(e) => {
-              const cleaned = e.target.value.replace(/[^\d+]/g, "");
-              setForm((p) => ({ ...p, phone: cleaned }));
-            }}
-          />
-        </div>
+        <Field label="Phone Number" type="tel" value={form.phone} onChange={(v) => setForm((p) => ({ ...p, phone: v }))} inputBase={inputBase} inputTheme={inputTheme} darkMode={darkMode} />
       </div>
 
-      <div className={`${darkMode ? "border-slate-800" : "border-slate-200"} border-t pt-4`} />
+      <Divider darkMode={darkMode} />
 
-      {/* Personal details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <label className={`text-xs ${subText} flex items-center gap-1`}>
-            <BadgeInfo className="w-4 h-4 text-emerald-500" /> Employee ID
-          </label>
-          <input
-            className={`${inputBase} ${inputTheme}`}
-            placeholder="e.g., EMP-001"
-            value={form.employeeId}
-            onChange={(e) => setForm((p) => ({ ...p, employeeId: e.target.value }))}
-          />
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Field label="Employee ID" value={form.employeeId} onChange={(v) => setForm((p) => ({ ...p, employeeId: v }))} inputBase={inputBase} inputTheme={inputTheme} darkMode={darkMode} />
+        <Field label="Date of Birth" type="date" value={form.dob} onChange={(v) => setForm((p) => ({ ...p, dob: v }))} inputBase={inputBase} inputTheme={inputTheme} darkMode={darkMode} />
 
-        <div className="space-y-1">
-          <label className={`text-xs ${subText} flex items-center gap-1`}>
-            <Calendar className="w-4 h-4 text-emerald-500" /> Date of Birth
-          </label>
-          <input
-            type="date"
-            className={`${inputBase} ${inputTheme}`}
-            value={form.dob}
-            onChange={(e) => setForm((p) => ({ ...p, dob: e.target.value }))}
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className={`text-xs ${subText} flex items-center gap-1`}>
-            <User className="w-4 h-4 text-emerald-500" /> Gender
-          </label>
-          <select
-            className={`${inputBase} ${inputTheme}`}
-            value={form.gender}
-            onChange={(e) => setForm((p) => ({ ...p, gender: e.target.value }))}
-          >
-            <option>Male</option>
-            <option>Female</option>
-            <option>Other</option>
-          </select>
-        </div>
-
-        <div className="space-y-1">
-          <label className={`text-xs ${subText} flex items-center gap-1`}>
-            <BadgeInfo className="w-4 h-4 text-emerald-500" /> Marital Status
-          </label>
-          <select
-            className={`${inputBase} ${inputTheme}`}
-            value={form.maritalStatus}
-            onChange={(e) => setForm((p) => ({ ...p, maritalStatus: e.target.value }))}
-          >
-            <option>Single</option>
-            <option>Married</option>
-            <option>Divorced</option>
-            <option>Widowed</option>
-          </select>
-        </div>
+        <SelectField label="Gender" value={form.gender} onChange={(v) => setForm((p) => ({ ...p, gender: v }))} options={["Male", "Female", "Other"]} inputBase={inputBase} inputTheme={inputTheme} darkMode={darkMode} />
+        <SelectField label="Marital Status" value={form.maritalStatus} onChange={(v) => setForm((p) => ({ ...p, maritalStatus: v }))} options={["Single", "Married", "Divorced", "Widowed"]} inputBase={inputBase} inputTheme={inputTheme} darkMode={darkMode} />
       </div>
 
-      <div className={`${darkMode ? "border-slate-800" : "border-slate-200"} border-t pt-4`} />
+      <Divider darkMode={darkMode} />
 
-      {/* Work details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <label className={`text-xs ${subText}`}>Department</label>
-          <select
-            className={`${inputBase} ${inputTheme}`}
-            value={form.departmentId}
-            onChange={(e) => setForm((p) => ({ ...p, departmentId: e.target.value }))}
-          >
-            <option value="">{loadingDepartments ? "Loading..." : "Select department"}</option>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className={`text-sm font-medium ${darkMode ? "text-slate-200" : "text-slate-700"}`}>Department *</label>
+          <select className={`${inputBase} ${inputTheme}`} value={form.departmentId} onChange={(e) => setForm((p) => ({ ...p, departmentId: e.target.value }))}>
+            <option value="">{loadingDepartments ? "Loading departments..." : "Select department"}</option>
             {departments.map((d) => (
-              <option key={d._id} value={d._id}>
-                {d.name}
-              </option>
+              <option key={d._id} value={d._id}>{d.name}</option>
             ))}
           </select>
         </div>
 
-        <div className="space-y-1">
-          <label className={`text-xs ${subText}`}>Role</label>
-          <select
-            className={`${inputBase} ${inputTheme}`}
-            value={form.role}
-            onChange={(e) => setForm((p) => ({ ...p, role: e.target.value }))}
-          >
-            <option value="employee">employee</option>
-            <option value="hr">hr</option>
-            <option value="admin">admin</option>
-          </select>
-        </div>
+        <SelectField label="Role" value={form.role} onChange={(v) => setForm((p) => ({ ...p, role: v }))} options={["employee", "hr", "admin"]} inputBase={inputBase} inputTheme={inputTheme} darkMode={darkMode} />
 
-        <div className="space-y-1 md:col-span-2">
-          <label className={`text-xs ${subText}`}>Status</label>
-          <select
-            className={`${inputBase} ${inputTheme}`}
-            value={form.status}
-            onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
-          >
-            <option>Active</option>
-            <option>On Leave</option>
-            <option>Inactive</option>
-          </select>
-        </div>
+        <SelectField label="Employment Status" value={form.status} onChange={(v) => setForm((p) => ({ ...p, status: v }))} options={["Active", "On Leave", "Inactive"]} inputBase={inputBase} inputTheme={inputTheme} darkMode={darkMode} />
+      </div>
+
+      <Divider darkMode={darkMode} />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <Field
+  label="Hourly Rate *"
+  type="number"
+  value={form.hourlyRate}
+  onChange={(v) => {
+    const hourly = Number(v || 0);
+    const monthly = hourly * 8 * 26;
+
+    setForm((p) => ({
+      ...p,
+      hourlyRate: v,
+      monthlySalary: monthly ? String(monthly) : "",
+    }));
+  }}
+  inputBase={inputBase}
+  inputTheme={inputTheme}
+  darkMode={darkMode}
+  icon
+/>
+
+     <Field
+  label="Monthly Salary"
+  type="number"
+  value={form.monthlySalary}
+  onChange={(v) =>
+    setForm((p) => ({
+      ...p,
+      monthlySalary: v,
+    }))
+  }
+  inputBase={inputBase}
+  inputTheme={inputTheme}
+  darkMode={darkMode}
+  icon
+/>
       </div>
     </div>
   );
 });
+
+function Field({ label, value, onChange, inputBase, inputTheme, darkMode, type = "text", icon = false }) {
+  return (
+    <div className="space-y-2">
+      <label className={`text-sm font-medium ${darkMode ? "text-slate-200" : "text-slate-700"} flex items-center gap-2`}>
+        {icon && <Banknote className="w-4 h-4 text-emerald-500" />}
+        {label}
+      </label>
+      <input type={type} min={type === "number" ? "0" : undefined} className={`${inputBase} ${inputTheme}`} value={value} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+function SelectField({ label, value, onChange, options, inputBase, inputTheme, darkMode }) {
+  return (
+    <div className="space-y-2">
+      <label className={`text-sm font-medium ${darkMode ? "text-slate-200" : "text-slate-700"}`}>{label}</label>
+      <select className={`${inputBase} ${inputTheme}`} value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function Divider({ darkMode }) {
+  return <div className={`${darkMode ? "border-slate-800" : "border-slate-200"} border-t pt-4`} />;
+}
 
 const EmployeeList = () => {
   const theme = useTheme?.();
   const darkMode = theme?.darkMode ?? false;
   const navigate = useNavigate();
 
-  // THEME CLASSES
-  const bgMain = darkMode ? "bg-slate-950 text-slate-50" : "bg-slate-100 text-slate-900";
-  const cardBg = darkMode ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200";
+  const bgMain = darkMode ? "bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" : "bg-gradient-to-br from-slate-100 via-white to-slate-50";
+  const cardBg = darkMode ? "bg-slate-900/80 backdrop-blur-sm border-slate-800" : "bg-white/80 backdrop-blur-sm border-slate-200";
   const subText = darkMode ? "text-slate-400" : "text-slate-600";
+  const textColor = darkMode ? "text-white" : "text-slate-900";
+  const borderColor = darkMode ? "border-slate-800" : "border-slate-200";
 
-  /**
-   * If backend returns "/uploads/xxx.png",
-   * we must render "http://localhost:5000/uploads/xxx.png"
-   */
+  const inputBase = "w-full px-4 py-2.5 border rounded-xl outline-none transition";
+  const inputTheme = darkMode
+    ? "border-slate-700 bg-slate-950 !text-white placeholder:text-slate-500 focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20"
+    : "border-slate-200 bg-white !text-slate-900 placeholder:text-slate-400 focus:border-emerald-600/60 focus:ring-2 focus:ring-emerald-500/20";
+
+  const [employees, setEmployees] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [form, setForm] = useState(emptyForm);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [taskEmployee, setTaskEmployee] = useState(null);
+  const [taskForm, setTaskForm] = useState({ title: "", description: "", priority: "medium" });
+
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
+  const [savingEmployee, setSavingEmployee] = useState(false);
+  const [updatingEmployee, setUpdatingEmployee] = useState(false);
+  const [deletingEmployee, setDeletingEmployee] = useState(false);
+  const [savingTask, setSavingTask] = useState(false);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [roleFilter, setRoleFilter] = useState("All");
+  const [viewMode, setViewMode] = useState("grid");
+
+  const [showCreate, setShowCreate] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [showView, setShowView] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+
   const resolveImageUrl = useCallback((maybeUrl) => {
     if (!maybeUrl) return "";
     const url = String(maybeUrl);
-
     if (url.startsWith("blob:")) return url;
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
     if (url.startsWith("/")) return `${API_BASE}${url}`;
@@ -325,195 +278,30 @@ const EmployeeList = () => {
   }, []);
 
   const fetchWithAuth = useCallback(async (endpoint, options = {}) => {
-    const t = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     const headers = new Headers(options.headers || {});
-    if (t) headers.set("Authorization", `Bearer ${t}`);
-
-    const isFormData = options.body instanceof FormData;
-
-    if (!isFormData) {
-      if (!headers.has("Content-Type") && options.method && options.method !== "GET") {
-        headers.set("Content-Type", "application/json");
-      }
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    if (!(options.body instanceof FormData) && options.method && options.method !== "GET") {
+      headers.set("Content-Type", "application/json");
     }
 
-    const res = await fetch(`${API_BASE}${endpoint}`, {
-      ...options,
-      headers,
-    });
-
-    let data = null;
+    const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
     const text = await res.text();
-    try {
-      data = text ? JSON.parse(text) : null;
-    } catch {
-      data = null;
-    }
+    const data = text ? JSON.parse(text) : null;
 
-    if (!res.ok) {
-      const msg = data?.error || data?.message || `Request failed (${res.status})`;
-      const err = new Error(msg);
-      err.status = res.status;
-      err.data = data;
-      throw err;
-    }
-
+    if (!res.ok) throw new Error(data?.error || data?.message || `Request failed (${res.status})`);
     return data;
   }, []);
 
-  // DATA LISTS
-  const [employees, setEmployees] = useState([]);
-  const [departments, setDepartments] = useState([]);
+  const resetForm = () => setForm(emptyForm);
 
-  // UI STATES
-  const [loadingEmployees, setLoadingEmployees] = useState(false);
-  const [loadingDepartments, setLoadingDepartments] = useState(false);
-  const [savingEmployee, setSavingEmployee] = useState(false);
-  const [updatingEmployee, setUpdatingEmployee] = useState(false);
-  const [deletingEmployee, setDeletingEmployee] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-
-  // FILTERS
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
-
-  // MODALS
-  const [showCreate, setShowCreate] = useState(false);
-  const [showEdit, setShowEdit] = useState(false);
-  const [showView, setShowView] = useState(false);
-  const [showDelete, setShowDelete] = useState(false);
-
-  // SELECTED EMPLOYEE
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-
-  // FORMS
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    phone: "",
-    departmentId: "",
-    status: "Active",
-    role: "employee",
-
-    employeeId: "",
-    maritalStatus: "Single",
-    dob: "",
-    gender: "Male",
-
-    imageFile: null,
-    imagePreview: "",
-  });
-
-  // UI HELPERS
-  const statusChipClasses = (status) => {
-    if (status === "Active") return "bg-emerald-500/10 text-emerald-500 border-emerald-500/40";
-    if (status === "On Leave") return "bg-sky-500/10 text-sky-500 border-sky-500/40";
-    return "bg-rose-500/10 text-rose-500 border-rose-500/40";
-  };
-
-  const inputBase = `w-full px-3 py-2 border rounded-xl outline-none transition`;
-  const inputTheme = darkMode
-    ? "border-slate-700 bg-slate-950 text-white placeholder:text-slate-500 focus:border-emerald-500/60"
-    : "border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-emerald-600/60";
-
-  const btnPrimary =
-    "w-full mt-5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-70 text-white py-2.5 rounded-xl flex items-center justify-center gap-2 transition";
-  const btnGhost =
-    "text-xs px-3 py-2 rounded-xl border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10 transition";
-
-  const prettyDate = (iso) => {
-    if (!iso) return "—";
-    try {
-      return new Date(iso).toLocaleString();
-    } catch {
-      return "—";
-    }
-  };
-
-  const toDateInput = (value) => {
-    if (!value) return "";
-    try {
-      return String(value).slice(0, 10);
-    } catch {
-      return "";
-    }
-  };
-
-  const resetForm = () => {
-    if (form.imagePreview && form.imagePreview.startsWith("blob:")) {
-      try {
-        URL.revokeObjectURL(form.imagePreview);
-      } catch {}
-    }
-
-    setForm({
-      name: "",
-      email: "",
-      password: "",
-      phone: "",
-      departmentId: "",
-      status: "Active",
-      role: "employee",
-
-      employeeId: "",
-      maritalStatus: "Single",
-      dob: "",
-      gender: "Male",
-
-      imageFile: null,
-      imagePreview: "",
-    });
-  };
-
-  const handleImagePick = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const allowed = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowed.includes(file.type)) {
-      setErrorMsg("Please upload JPG, PNG, or WEBP image.");
-      return;
-    }
-
-    if (form.imagePreview && form.imagePreview.startsWith("blob:")) {
-      try {
-        URL.revokeObjectURL(form.imagePreview);
-      } catch {}
-    }
-
-    const previewUrl = URL.createObjectURL(file);
-    setForm((p) => ({
-      ...p,
-      imageFile: file,
-      imagePreview: previewUrl,
-    }));
-  };
-
-  const clearPickedImage = () => {
-    if (form.imagePreview && form.imagePreview.startsWith("blob:")) {
-      try {
-        URL.revokeObjectURL(form.imagePreview);
-      } catch {}
-    }
-
-    setForm((p) => ({
-      ...p,
-      imageFile: null,
-      imagePreview: "",
-    }));
-  };
-
-  // DATA FETCH
   const fetchDepartments = useCallback(async () => {
     try {
       setLoadingDepartments(true);
       const data = await fetchWithAuth("/api/departments", { method: "GET" });
-      if (!data?.success) throw new Error(data?.error || "Failed to load departments");
       setDepartments(data.departments || []);
     } catch (err) {
-      console.error(err);
-      setErrorMsg(err?.message || "Error loading departments");
+      toast.error(err.message || "Error loading departments");
     } finally {
       setLoadingDepartments(false);
     }
@@ -522,41 +310,31 @@ const EmployeeList = () => {
   const fetchEmployees = useCallback(async () => {
     try {
       setLoadingEmployees(true);
-      setErrorMsg("");
-
       const data = await fetchWithAuth("/api/admin/employees", { method: "GET" });
-      if (!data?.success) throw new Error(data?.error || "Failed to load employees");
 
-      const normalized = (data.employees || []).map((u, idx) => {
-        const rawImage = u.imageUrl || u.profileImage || u.image || "";
-        return {
-          _id: u._id,
-          id: u.empCode || u.employeeId || `EMP-${String(idx + 1).padStart(3, "0")}`,
-          empCode: u.empCode || "",
-          employeeId: u.employeeId || u.empCode || "",
-          name: u.name || "",
-          email: u.email || "",
-          phone: u.phone || "—",
-          department: u.departmentName || (u.department?.name ?? "—"),
-          departmentId: u.department?._id || u.departmentId || "",
-          role: u.role || "employee",
-          status: u.status || "Active",
-
-          maritalStatus: u.maritalStatus || "—",
-          dob: u.dob || "",
-          gender: u.gender || "—",
-
-          imageUrl: resolveImageUrl(rawImage),
-
-          createdAt: u.createdAt,
-          updatedAt: u.updatedAt,
-        };
-      });
+      const normalized = (data.employees || []).map((u, idx) => ({
+        _id: u._id,
+        id: u.empCode || u.employeeId || `EMP-${String(idx + 1).padStart(3, "0")}`,
+        empCode: u.empCode || "",
+        employeeId: u.employeeId || u.empCode || "",
+        name: u.name || "",
+        email: u.email || "",
+        phone: u.phone || "—",
+        department: u.departmentName || u.department?.name || "—",
+        departmentId: u.department?._id || u.departmentId || "",
+        role: u.role || "employee",
+        status: u.status || "Active",
+        maritalStatus: u.maritalStatus || "—",
+        dob: u.dob || "",
+        gender: u.gender || "—",
+        hourlyRate: Number(u.hourlyRate || 0),
+        monthlySalary: Number(u.monthlySalary || 0),
+        imageUrl: resolveImageUrl(u.imageUrl || u.profileImage || u.image || ""),
+      }));
 
       setEmployees(normalized);
     } catch (err) {
-      console.error(err);
-      setErrorMsg(err?.message || "Error loading employees");
+      toast.error(err.message || "Error loading employees");
     } finally {
       setLoadingEmployees(false);
     }
@@ -565,751 +343,368 @@ const EmployeeList = () => {
   useEffect(() => {
     fetchDepartments();
     fetchEmployees();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchDepartments, fetchEmployees]);
 
-  const filteredEmployees = useMemo(() => {
-    return employees.filter((emp) => {
-      const s = searchTerm.toLowerCase();
-
-      const matchesSearch =
-        emp.name.toLowerCase().includes(s) ||
-        emp.email.toLowerCase().includes(s) ||
-        String(emp.id).toLowerCase().includes(s) ||
-        String(emp.employeeId).toLowerCase().includes(s);
-
-      const matchesStatus = statusFilter === "All" ? true : emp.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [employees, searchTerm, statusFilter]);
-
-  // MODAL HELPERS
-  const openCreate = () => {
-    resetForm();
-    setSelectedEmployee(null);
-    setErrorMsg("");
-    setShowCreate(true);
+  const validateEmployee = (isEdit = false) => {
+    if (!form.name.trim()) return toast.error("Name is required.");
+    if (!form.email.trim()) return toast.error("Email is required.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return toast.error("Enter a valid email.");
+    if (!isEdit && (!form.password || form.password.length < 6)) return toast.error("Password must be at least 6 characters.");
+    if (isEdit && form.password && form.password.length < 6) return toast.error("Password must be at least 6 characters.");
+    if (!form.departmentId) return toast.error("Please select a department.");
+    if (form.hourlyRate === "" || Number(form.hourlyRate) < 0) return toast.error("Hourly rate is required.");
+    if (form.monthlySalary !== "" && Number(form.monthlySalary) < 0) return toast.error("Monthly salary cannot be negative.");
+    return true;
   };
 
-  const closeCreate = () => {
-    setShowCreate(false);
-    setErrorMsg("");
-    resetForm();
+  const buildEmployeeFormData = () => {
+    const fd = new FormData();
+    fd.append("name", form.name.trim());
+    fd.append("email", form.email.trim());
+    fd.append("phone", form.phone?.trim() || "");
+    fd.append("departmentId", form.departmentId);
+    fd.append("status", form.status || "Active");
+    fd.append("role", form.role || "employee");
+    fd.append("employeeId", form.employeeId?.trim() || "");
+    fd.append("maritalStatus", form.maritalStatus || "Single");
+    fd.append("dob", form.dob || "");
+    fd.append("gender", form.gender || "Male");
+    fd.append("hourlyRate", form.hourlyRate || 0);
+    fd.append("monthlySalary", form.monthlySalary || 0);
+    if (form.password) fd.append("password", form.password);
+    if (form.imageFile) fd.append("image", form.imageFile);
+    return fd;
   };
 
-  const openView = (emp) => {
-    setSelectedEmployee(emp);
-    setErrorMsg("");
-    setShowView(true);
-  };
-
-  const closeView = () => {
-    setShowView(false);
-    setSelectedEmployee(null);
-  };
-
-  const openEdit = (emp) => {
-    setSelectedEmployee(emp);
-    setErrorMsg("");
-
-    setForm({
-      name: emp.name || "",
-      email: emp.email || "",
-      password: "",
-      phone: emp.phone === "—" ? "" : emp.phone || "",
-      departmentId: emp.departmentId || "",
-      status: emp.status || "Active",
-      role: emp.role || "employee",
-
-      employeeId: emp.employeeId || emp.id || "",
-      maritalStatus: emp.maritalStatus && emp.maritalStatus !== "—" ? emp.maritalStatus : "Single",
-      dob: toDateInput(emp.dob),
-      gender: emp.gender && emp.gender !== "—" ? emp.gender : "Male",
-
-      imageFile: null,
-      imagePreview: emp.imageUrl || "",
-    });
-
-    setShowEdit(true);
-  };
-
-  const closeEdit = () => {
-    setShowEdit(false);
-    setSelectedEmployee(null);
-    resetForm();
-    setErrorMsg("");
-  };
-
-  const openDelete = (emp) => {
-    setSelectedEmployee(emp);
-    setErrorMsg("");
-    setShowDelete(true);
-  };
-
-  const closeDelete = () => {
-    setShowDelete(false);
-    setSelectedEmployee(null);
-    setErrorMsg("");
-  };
-
-  // CREATE
   const createEmployee = async () => {
-    if (!form.name.trim()) return setErrorMsg("Name is required.");
-    if (!form.email.trim()) return setErrorMsg("Email is required.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return setErrorMsg("Enter a valid email.");
-    if (!form.password || form.password.length < 6) return setErrorMsg("Password must be at least 6 chars.");
-    if (!form.departmentId) return setErrorMsg("Please select a department.");
-
+    if (!validateEmployee(false)) return;
     try {
       setSavingEmployee(true);
-      setErrorMsg("");
-
-      const fd = new FormData();
-      fd.append("name", form.name.trim());
-      fd.append("email", form.email.trim());
-      fd.append("password", form.password);
-      fd.append("departmentId", form.departmentId);
-      fd.append("phone", form.phone?.trim() || "");
-      fd.append("status", form.status || "Active");
-      fd.append("role", form.role || "employee");
-
-      fd.append("employeeId", form.employeeId?.trim() || "");
-      fd.append("maritalStatus", form.maritalStatus || "Single");
-      fd.append("dob", form.dob || "");
-      fd.append("gender", form.gender || "Male");
-
-      if (form.imageFile) fd.append("image", form.imageFile);
-
       const data = await fetchWithAuth("/api/admin/employees", {
         method: "POST",
-        body: fd,
+        body: buildEmployeeFormData(),
       });
-
       if (!data?.success) throw new Error(data?.error || "Failed to create employee");
-
-      closeCreate();
+      setShowCreate(false);
+      resetForm();
       await fetchEmployees();
-      alert("✅ Employee created successfully!");
+      toast.success("Employee created successfully!");
     } catch (err) {
-      console.error(err);
-      setErrorMsg(err?.message || "Error creating employee");
+      toast.error(err.message || "Error creating employee");
     } finally {
       setSavingEmployee(false);
     }
   };
 
-  // UPDATE
   const updateEmployee = async () => {
-    if (!selectedEmployee?._id) return setErrorMsg("Employee not selected.");
-
-    if (!form.name.trim()) return setErrorMsg("Name is required.");
-    if (!form.email.trim()) return setErrorMsg("Email is required.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return setErrorMsg("Enter a valid email.");
-    if (!form.departmentId) return setErrorMsg("Please select a department.");
-    if (form.password && form.password.length < 6) return setErrorMsg("Password must be at least 6 chars.");
+    if (!selectedEmployee?._id) return toast.error("Employee not selected.");
+    if (!validateEmployee(true)) return;
 
     try {
       setUpdatingEmployee(true);
-      setErrorMsg("");
-
-      const fd = new FormData();
-      fd.append("name", form.name.trim());
-      fd.append("email", form.email.trim());
-      fd.append("phone", form.phone?.trim() || "");
-      fd.append("departmentId", form.departmentId);
-      fd.append("status", form.status || "Active");
-      fd.append("role", form.role || "employee");
-
-      fd.append("employeeId", form.employeeId?.trim() || "");
-      fd.append("maritalStatus", form.maritalStatus || "Single");
-      fd.append("dob", form.dob || "");
-      fd.append("gender", form.gender || "Male");
-
-      if (form.password) fd.append("password", form.password);
-      if (form.imageFile) fd.append("image", form.imageFile);
-
       const data = await fetchWithAuth(`/api/admin/employees/${selectedEmployee._id}`, {
         method: "PUT",
-        body: fd,
+        body: buildEmployeeFormData(),
       });
-
       if (!data?.success) throw new Error(data?.error || "Failed to update employee");
-
-      closeEdit();
+      setShowEdit(false);
+      resetForm();
       await fetchEmployees();
-      alert("✅ Employee updated successfully!");
+      toast.success("Employee updated successfully!");
     } catch (err) {
-      console.error(err);
-      setErrorMsg(err?.message || "Error updating employee");
+      toast.error(err.message || "Error updating employee");
     } finally {
       setUpdatingEmployee(false);
     }
   };
 
-  // DELETE
   const deleteEmployee = async () => {
-    if (!selectedEmployee?._id) return setErrorMsg("Employee not selected.");
-
+    if (!selectedEmployee?._id) return toast.error("Employee not selected.");
     try {
       setDeletingEmployee(true);
-      setErrorMsg("");
-
-      const data = await fetchWithAuth(`/api/admin/employees/${selectedEmployee._id}`, {
-        method: "DELETE",
-      });
-
+      const data = await fetchWithAuth(`/api/admin/employees/${selectedEmployee._id}`, { method: "DELETE" });
       if (!data?.success) throw new Error(data?.error || "Failed to delete employee");
-
-      closeDelete();
+      setShowDelete(false);
       await fetchEmployees();
-      alert("🗑️ Employee deleted successfully!");
+      toast.success("Employee deleted successfully!");
     } catch (err) {
-      console.error(err);
-      setErrorMsg(err?.message || "Error deleting employee");
+      toast.error(err.message || "Error deleting employee");
     } finally {
       setDeletingEmployee(false);
     }
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
-      className={`min-h-screen w-full px-4 md:px-8 py-6 md:py-8 ${bgMain}`}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 mb-5 md:mb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <ArrowLeft className="w-5 h-5 cursor-pointer" onClick={() => navigate("/admindashboard")} />
-            <Users className="w-5 h-5 md:w-6 md:h-6 text-emerald-500" />
-            <h1 className="text-lg md:text-xl font-semibold tracking-tight">Employee Profiles</h1>
-          </div>
-          <p className={`text-xs md:text-sm ${subText}`}>View and manage all employee profiles in the system.</p>
-        </div>
+  const assignTask = async () => {
+    if (!taskEmployee?._id) return toast.error("Employee not selected.");
+    if (!taskForm.title.trim()) return toast.error("Task title is required.");
 
-        <div className="flex items-center gap-2">
-          <button onClick={fetchEmployees} className={btnGhost}>
-            Refresh
-          </button>
-          <button
-            onClick={openCreate}
-            className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition"
-          >
+    try {
+      setSavingTask(true);
+      const data = await fetchWithAuth("/api/tasks", {
+        method: "POST",
+        body: JSON.stringify({
+          title: taskForm.title.trim(),
+          description: taskForm.description.trim(),
+          priority: taskForm.priority,
+          assignedTo: taskEmployee._id,
+        }),
+      });
+      if (!data?.success) throw new Error(data?.error || "Failed to assign task");
+      setShowTaskModal(false);
+      toast.success(`Task assigned to ${taskEmployee.name} successfully!`);
+    } catch (err) {
+      toast.error(err.message || "Error assigning task");
+    } finally {
+      setSavingTask(false);
+    }
+  };
+
+  const handleImagePick = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) return toast.error("Please upload JPG, PNG, or WEBP image.");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Image size should be less than 5MB");
+    setForm((p) => ({ ...p, imageFile: file, imagePreview: URL.createObjectURL(file) }));
+  };
+
+  const clearPickedImage = () => setForm((p) => ({ ...p, imageFile: null, imagePreview: "" }));
+
+  const openCreate = () => {
+    resetForm();
+    setShowCreate(true);
+  };
+
+  const openEdit = (emp) => {
+    setSelectedEmployee(emp);
+    setForm({
+      ...emptyForm,
+      name: emp.name || "",
+      email: emp.email || "",
+      phone: emp.phone === "—" ? "" : emp.phone || "",
+      departmentId: emp.departmentId || "",
+      status: emp.status || "Active",
+      role: emp.role || "employee",
+      employeeId: emp.employeeId || emp.id || "",
+      maritalStatus: emp.maritalStatus !== "—" ? emp.maritalStatus : "Single",
+      dob: emp.dob ? String(emp.dob).slice(0, 10) : "",
+      gender: emp.gender !== "—" ? emp.gender : "Male",
+      hourlyRate: String(emp.hourlyRate || ""),
+      monthlySalary: String(emp.monthlySalary || ""),
+      imagePreview: emp.imageUrl || "",
+    });
+    setShowEdit(true);
+  };
+
+  const filteredEmployees = useMemo(() => {
+    return employees.filter((emp) => {
+      const s = searchTerm.toLowerCase();
+      const matchesSearch = emp.name.toLowerCase().includes(s) || emp.email.toLowerCase().includes(s) || String(emp.employeeId).toLowerCase().includes(s);
+      const matchesStatus = statusFilter === "All" || emp.status === statusFilter;
+      const matchesRole = roleFilter === "All" || emp.role === roleFilter;
+      return matchesSearch && matchesStatus && matchesRole;
+    });
+  }, [employees, searchTerm, statusFilter, roleFilter]);
+
+  const stats = {
+    total: employees.length,
+    active: employees.filter((e) => e.status === "Active").length,
+    onLeave: employees.filter((e) => e.status === "On Leave").length,
+    inactive: employees.filter((e) => e.status === "Inactive").length,
+    admins: employees.filter((e) => e.role === "admin").length,
+    hr: employees.filter((e) => e.role === "hr").length,
+  };
+
+  const statusChipClasses = (status) => {
+    if (status === "Active") return "bg-emerald-500/10 text-emerald-500 border-emerald-500/40";
+    if (status === "On Leave") return "bg-sky-500/10 text-sky-500 border-sky-500/40";
+    return "bg-rose-500/10 text-rose-500 border-rose-500/40";
+  };
+
+  const EmployeeCard = ({ emp }) => (
+    <div className={`rounded-xl border ${cardBg} p-5`}>
+      <div className="flex flex-col items-center text-center">
+        <div className="h-24 w-24 rounded-2xl overflow-hidden border-2 border-emerald-500/30 flex items-center justify-center">
+          {emp.imageUrl ? <img src={emp.imageUrl} alt={emp.name} className="h-full w-full object-cover" /> : <UserCircle2 className="w-12 h-12 text-emerald-500" />}
+        </div>
+        <h3 className={`mt-4 font-semibold text-lg ${textColor}`}>{emp.name}</h3>
+        <p className={`text-xs ${subText}`}>{emp.email}</p>
+        <p className={`text-xs ${subText} mt-1`}>ID: {emp.employeeId || emp.id}</p>
+      </div>
+
+      <div className={`mt-4 pt-4 border-t ${borderColor} text-sm space-y-2`}>
+        <p className={subText}>Department: {emp.department}</p>
+        <p className={subText}>Phone: {emp.phone}</p>
+        <p className={subText}>Hourly Rate: Rs. {Number(emp.hourlyRate || 0).toLocaleString()}/hr</p>
+        <p className={subText}>Monthly Salary: Rs. {Number(emp.monthlySalary || 0).toLocaleString()}</p>
+      </div>
+
+      <div className="flex items-center gap-2 mt-4">
+        <button onClick={() => { setTaskEmployee(emp); setShowTaskModal(true); }} className="flex-1 px-3 py-2 rounded-lg bg-cyan-500/10 text-cyan-600">Task</button>
+        <button onClick={() => { setSelectedEmployee(emp); setShowView(true); }} className="px-3 py-2 rounded-lg bg-blue-500/10 text-blue-600"><Eye className="w-4 h-4" /></button>
+        <button onClick={() => openEdit(emp)} className="px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-600"><Pencil className="w-4 h-4" /></button>
+        <button onClick={() => { setSelectedEmployee(emp); setShowDelete(true); }} className="px-3 py-2 rounded-lg bg-rose-500/10 text-rose-600"><Trash2 className="w-4 h-4" /></button>
+      </div>
+    </div>
+  );
+
+  const StatCard = ({ icon: Icon, label, value }) => (
+    <div className={`rounded-xl border ${cardBg} p-5`}>
+      <p className={`text-xs uppercase ${subText}`}>{label}</p>
+      <p className={`text-2xl font-bold mt-1 ${textColor}`}>{value}</p>
+    </div>
+  );
+
+  const formProps = {
+    darkMode,
+    subText,
+    inputBase,
+    inputTheme,
+    loadingDepartments,
+    departments,
+    form,
+    setForm,
+    resolveImageUrl,
+    handleImagePick,
+    clearPickedImage,
+  };
+
+  return (
+    <div className={`min-h-screen w-full px-4 md:px-8 py-6 md:py-8 ${bgMain}`}>
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate("/admindashboard")} className={`p-2 rounded-xl ${darkMode ? "hover:bg-slate-800 text-slate-300" : "hover:bg-slate-200 text-slate-700"}`}>
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className={`text-2xl font-bold ${textColor}`}>Employee Management</h1>
+              <p className={`text-sm ${subText}`}>Manage employees and salary details</p>
+            </div>
+          </div>
+
+          <button onClick={openCreate} className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-5 py-2.5 rounded-xl">
             <Plus className="w-4 h-4" />
             Add Employee
           </button>
         </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-6">
+          <StatCard icon={Users} label="Total" value={stats.total} />
+          <StatCard icon={CheckCircle} label="Active" value={stats.active} />
+          <StatCard icon={Clock} label="On Leave" value={stats.onLeave} />
+          <StatCard icon={AlertCircle} label="Inactive" value={stats.inactive} />
+          <StatCard icon={ShieldCheck} label="Admins" value={stats.admins} />
+          <StatCard icon={BadgeCheck} label="HR" value={stats.hr} />
+        </div>
       </div>
 
-      {errorMsg ? (
-        <div className="mb-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
-          {errorMsg}
-        </div>
-      ) : null}
-
-      {/* Filters */}
-      <div
-        className={`mb-5 md:mb-6 rounded-2xl border shadow-sm px-4 py-3.5 md:px-5 md:py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 ${cardBg}`}
-      >
-        <div className="flex-1 flex items-center gap-2">
-          <div
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl border w-full md:w-96 ${
-              darkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"
-            }`}
-          >
-            <Search className="w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name, email or ID"
-              className={`flex-1 text-xs md:text-sm bg-transparent outline-none ${
-                darkMode ? "text-slate-100" : "text-slate-800"
-              }`}
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 text-xs md:text-sm">
-          <Filter className="w-4 h-4 text-slate-400" />
-          <span className={subText}>Status:</span>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className={`border rounded-lg px-2.5 py-1.5 text-xs md:text-sm outline-none ${
-              darkMode ? "border-slate-700 bg-slate-900 text-slate-100" : "border-slate-200 bg-white text-slate-800"
-            }`}
-          >
+      <div className={`rounded-xl border ${cardBg} p-5 mb-6`}>
+        <div className="flex flex-col lg:flex-row gap-4">
+          <input className={`flex-1 px-4 py-2.5 rounded-lg border ${borderColor} ${darkMode ? "bg-slate-900/50 text-white" : "bg-white text-slate-900"}`} placeholder="Search by name, email, or ID..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <select className={`${inputBase} ${inputTheme} lg:w-48`} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option>All</option>
             <option>Active</option>
             <option>On Leave</option>
             <option>Inactive</option>
           </select>
+          <select className={`${inputBase} ${inputTheme} lg:w-48`} value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+            <option>All</option>
+            <option>employee</option>
+            <option>hr</option>
+            <option>admin</option>
+          </select>
+          <button onClick={fetchEmployees} className={`px-4 py-2.5 rounded-lg border ${borderColor} ${textColor}`}>
+            <RefreshCw className={`w-4 h-4 ${loadingEmployees ? "animate-spin" : ""}`} />
+          </button>
         </div>
       </div>
 
-      {/* Employee list */}
-      <div className={`rounded-2xl border shadow-sm overflow-hidden ${cardBg}`}>
-        <div className="px-4 py-3 md:px-5 md:py-3.5 border-b border-slate-800/20 flex items-center justify-between">
-          <span className="text-xs md:text-sm font-medium uppercase tracking-[0.18em]">Employee List</span>
-          <span className={`text-[11px] md:text-xs ${subText}`}>
-            {filteredEmployees.length} employee{filteredEmployees.length !== 1 && "s"}
-          </span>
+      <div className={`rounded-xl border ${cardBg} overflow-hidden`}>
+        <div className={`px-5 py-3 border-b ${borderColor}`}>
+          <span className={`text-sm ${subText}`}>Showing {filteredEmployees.length} of {employees.length} employees</span>
         </div>
 
         {loadingEmployees ? (
-          <div className="px-5 py-10 flex items-center justify-center gap-2">
-            <Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
-            <span className={`text-sm ${subText}`}>Loading employees…</span>
-          </div>
+          <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-emerald-500" /></div>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filteredEmployees.map((emp, index) => (
-              <motion.div
-                key={emp._id || emp.id}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.03 * index }}
-                className="px-4 py-3.5 md:px-5 md:py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
-              >
-                {/* Left */}
-                <div className="flex items-center gap-3 md:gap-4">
-                  <div className="h-9 w-9 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center overflow-hidden">
-                    {emp.imageUrl ? (
-                      <img src={emp.imageUrl} alt="Profile" className="h-full w-full object-cover" />
-                    ) : (
-                      <UserCircle2 className="w-4 h-4 text-emerald-500" />
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold">{emp.name}</span>
-                      {emp.role === "admin" && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/40 px-2 py-0.5 text-[10px] font-medium text-emerald-500">
-                          <BadgeCheck className="w-3 h-3" />
-                          Admin
-                        </span>
-                      )}
-                      {emp.role === "hr" && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 border border-sky-500/40 px-2 py-0.5 text-[10px] font-medium text-sky-400">
-                          <ShieldCheck className="w-3 h-3" />
-                          HR
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 mt-0.5 text-[11px]">
-                      <span className={subText}>ID: {emp.employeeId || emp.id}</span>
-                      <span className={`flex items-center gap-1 ${subText}`}>
-                        <Building2 className="w-3 h-3" />
-                        {emp.department}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Middle */}
-                <div className="flex-1 flex flex-wrap gap-3 text-[11px] md:text-xs">
-                  <span className={`inline-flex items-center gap-1.5 ${subText}`}>
-                    <Mail className="w-3.5 h-3.5" />
-                    {emp.email}
-                  </span>
-                  <span className={`inline-flex items-center gap-1.5 ${subText}`}>
-                    <Phone className="w-3.5 h-3.5" />
-                    {emp.phone}
-                  </span>
-                </div>
-
-                {/* Right */}
-                <div className="flex items-center justify-between md:justify-end gap-3">
-                  <span
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-medium ${statusChipClasses(
-                      emp.status
-                    )}`}
-                  >
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        emp.status === "Active"
-                          ? "bg-emerald-500"
-                          : emp.status === "On Leave"
-                          ? "bg-sky-500"
-                          : "bg-rose-500"
-                      }`}
-                    />
-                    {emp.status}
-                  </span>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => openView(emp)}
-                      className={`p-2 rounded-xl border ${
-                        darkMode ? "border-slate-700 hover:bg-slate-800" : "border-slate-200 hover:bg-slate-50"
-                      } transition`}
-                      title="View"
-                    >
-                      <Eye className="w-4 h-4 text-slate-400" />
-                    </button>
-
-                    <button
-                      onClick={() => openEdit(emp)}
-                      className={`p-2 rounded-xl border ${
-                        darkMode ? "border-slate-700 hover:bg-slate-800" : "border-slate-200 hover:bg-slate-50"
-                      } transition`}
-                      title="Edit"
-                    >
-                      <Pencil className="w-4 h-4 text-emerald-400" />
-                    </button>
-
-                    <button
-                      onClick={() => openDelete(emp)}
-                      className={`p-2 rounded-xl border ${
-                        darkMode ? "border-slate-700 hover:bg-slate-800" : "border-slate-200 hover:bg-slate-50"
-                      } transition`}
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4 text-rose-400" />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-
-            {filteredEmployees.length === 0 && (
-              <div className="px-5 py-10 text-center text-xs md:text-sm text-slate-400">No employees match your filters.</div>
-            )}
+          <div className="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {filteredEmployees.map((emp) => <EmployeeCard key={emp._id} emp={emp} />)}
           </div>
         )}
       </div>
 
-      {/* ========================= */}
-      {/* CREATE EMPLOYEE MODAL     */}
-      {/* ========================= */}
-      <AnimatePresence>
-        {showCreate && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center px-4 z-50">
-            <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              className={`w-full max-w-2xl rounded-2xl p-6 shadow-xl ${darkMode ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Create Employee</h3>
-                <button onClick={closeCreate}>
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+      <EmployeeModal show={showCreate} title="Add New Employee" darkMode={darkMode} textColor={textColor} borderColor={borderColor} onClose={() => { setShowCreate(false); resetForm(); }} onSave={createEmployee} saving={savingEmployee} saveText="Create Employee">
+        <EmployeeFormBody mode="create" {...formProps} />
+      </EmployeeModal>
 
-              <EmployeeFormBody
-                mode="create"
-                darkMode={darkMode}
-                subText={subText}
-                inputBase={inputBase}
-                inputTheme={inputTheme}
-                loadingDepartments={loadingDepartments}
-                departments={departments}
-                form={form}
-                setForm={setForm}
-                resolveImageUrl={resolveImageUrl}
-                handleImagePick={handleImagePick}
-                clearPickedImage={clearPickedImage}
-              />
+      <EmployeeModal show={showEdit && selectedEmployee} title="Edit Employee" darkMode={darkMode} textColor={textColor} borderColor={borderColor} onClose={() => { setShowEdit(false); resetForm(); }} onSave={updateEmployee} saving={updatingEmployee} saveText="Update Employee">
+        <EmployeeFormBody mode="edit" {...formProps} />
+      </EmployeeModal>
 
-              <button onClick={createEmployee} disabled={savingEmployee} className={btnPrimary}>
-                {savingEmployee ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {savingEmployee ? "Creating..." : "Create Employee"}
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <EmployeeModal show={showDelete && selectedEmployee} title="Delete Employee" darkMode={darkMode} textColor={textColor} borderColor={borderColor} onClose={() => setShowDelete(false)} onSave={deleteEmployee} saving={deletingEmployee} saveText="Delete">
+        <p className={subText}>Are you sure you want to delete <b>{selectedEmployee?.name}</b>?</p>
+      </EmployeeModal>
 
-      {/* ========================= */}
-      {/* ✅ EDIT EMPLOYEE MODAL UI */}
-      {/* ========================= */}
-      <AnimatePresence>
-        {showEdit && selectedEmployee && (
-          <div className="fixed inset-0 z-50">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60"
-              onClick={closeEdit}
-            />
+      <EmployeeModal show={showView && selectedEmployee} title="Employee Details" darkMode={darkMode} textColor={textColor} borderColor={borderColor} onClose={() => setShowView(false)} hideSave>
+        <div className="space-y-2">
+          <p>Name: {selectedEmployee?.name}</p>
+          <p>Email: {selectedEmployee?.email}</p>
+          <p>Department: {selectedEmployee?.department}</p>
+          <p>Hourly Rate: Rs. {Number(selectedEmployee?.hourlyRate || 0).toLocaleString()}/hr</p>
+          <p>Monthly Salary: Rs. {Number(selectedEmployee?.monthlySalary || 0).toLocaleString()}</p>
+        </div>
+      </EmployeeModal>
 
-            {/* Modal */}
-            <div className="absolute inset-0 flex items-center justify-center px-4">
-              <motion.div
-                initial={{ opacity: 0, y: 18, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 18, scale: 0.98 }}
-                transition={{ duration: 0.18 }}
-                className={`w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden ${
-                  darkMode ? "bg-slate-900 text-white" : "bg-white text-slate-900"
-                }`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Header */}
-                <div className={`px-6 py-5 border-b ${darkMode ? "border-slate-800" : "border-slate-200"}`}>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className="h-12 w-12 rounded-2xl overflow-hidden border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
-                        {selectedEmployee.imageUrl ? (
-                          <img src={selectedEmployee.imageUrl} alt="Profile" className="h-full w-full object-cover" />
-                        ) : (
-                          <UserCircle2 className="w-7 h-7 text-emerald-500" />
-                        )}
-                      </div>
-
-                      <div className="min-w-0">
-                        <h3 className="text-lg md:text-xl font-semibold leading-tight truncate">Edit Employee</h3>
-
-                        <p className={`text-xs mt-1 ${subText} truncate`}>
-                          Editing: <span className="font-semibold">{selectedEmployee.name}</span> • Last updated{" "}
-                          <span className="font-semibold">{prettyDate(selectedEmployee.updatedAt)}</span>
-                        </p>
-
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <span
-                            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-medium ${statusChipClasses(
-                              selectedEmployee.status
-                            )}`}
-                          >
-                            <span
-                              className={`w-2 h-2 rounded-full ${
-                                selectedEmployee.status === "Active"
-                                  ? "bg-emerald-500"
-                                  : selectedEmployee.status === "On Leave"
-                                  ? "bg-sky-500"
-                                  : "bg-rose-500"
-                              }`}
-                            />
-                            {selectedEmployee.status}
-                          </span>
-
-                          {selectedEmployee.role === "admin" && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/40 px-3 py-1 text-[11px] font-medium text-emerald-400">
-                              <BadgeCheck className="w-3.5 h-3.5" />
-                              Admin
-                            </span>
-                          )}
-
-                          {selectedEmployee.role === "hr" && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 border border-sky-500/40 px-3 py-1 text-[11px] font-medium text-sky-300">
-                              <ShieldCheck className="w-3.5 h-3.5" />
-                              HR
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={closeEdit}
-                      className={`p-2 rounded-xl border transition ${
-                        darkMode ? "border-slate-700 hover:bg-slate-800" : "border-slate-200 hover:bg-slate-50"
-                      }`}
-                      title="Close"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Body (scrollable) */}
-                <div className="max-h-[72vh] overflow-auto px-6 py-5">
-                  <EmployeeFormBody
-                    mode="edit"
-                    darkMode={darkMode}
-                    subText={subText}
-                    inputBase={inputBase}
-                    inputTheme={inputTheme}
-                    loadingDepartments={loadingDepartments}
-                    departments={departments}
-                    form={form}
-                    setForm={setForm}
-                    resolveImageUrl={resolveImageUrl}
-                    handleImagePick={handleImagePick}
-                    clearPickedImage={clearPickedImage}
-                  />
-                </div>
-
-                {/* Footer */}
-                <div className={`px-6 py-4 border-t flex items-center justify-end gap-2 ${darkMode ? "border-slate-800" : "border-slate-200"}`}>
-                  <button
-                    onClick={closeEdit}
-                    className={`px-4 py-2 rounded-xl border transition ${
-                      darkMode ? "border-slate-700 hover:bg-slate-800" : "border-slate-200 hover:bg-slate-50"
-                    }`}
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    onClick={updateEmployee}
-                    disabled={updatingEmployee}
-                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-70 flex items-center justify-center gap-2"
-                  >
-                    {updatingEmployee ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    {updatingEmployee ? "Updating..." : "Update Employee"}
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* ========================= */}
-      {/* VIEW EMPLOYEE MODAL       */}
-      {/* ========================= */}
-      <AnimatePresence>
-        {showView && selectedEmployee && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center px-4 z-50">
-            <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              className={`w-full max-w-lg rounded-2xl p-6 shadow-xl ${darkMode ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Employee Details</h3>
-                <button onClick={closeView}>
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="h-14 w-14 rounded-2xl overflow-hidden border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
-                  {selectedEmployee.imageUrl ? (
-                    <img src={selectedEmployee.imageUrl} alt="Profile" className="h-full w-full object-cover" />
-                  ) : (
-                    <UserCircle2 className="w-7 h-7 text-emerald-500" />
-                  )}
-                </div>
-
-                <div className="min-w-0">
-                  <p className="text-base font-semibold truncate">{selectedEmployee.name}</p>
-                  <p className={`text-xs ${subText} truncate`}>{selectedEmployee.email}</p>
-                  <div className={`mt-1 text-[11px] ${subText}`}>
-                    ID: <span className="font-semibold">{selectedEmployee.employeeId || selectedEmployee.id}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className={`${darkMode ? "border-slate-800" : "border-slate-200"} border-t my-4`} />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                <div className={`rounded-xl border p-3 ${darkMode ? "border-slate-800 bg-slate-950/30" : "border-slate-200 bg-slate-50"}`}>
-                  <p className={`text-xs ${subText}`}>Department</p>
-                  <p className="font-semibold">{selectedEmployee.department}</p>
-                </div>
-
-                <div className={`rounded-xl border p-3 ${darkMode ? "border-slate-800 bg-slate-950/30" : "border-slate-200 bg-slate-50"}`}>
-                  <p className={`text-xs ${subText}`}>Role</p>
-                  <p className="font-semibold">{selectedEmployee.role}</p>
-                </div>
-
-                <div className={`rounded-xl border p-3 ${darkMode ? "border-slate-800 bg-slate-950/30" : "border-slate-200 bg-slate-50"}`}>
-                  <p className={`text-xs ${subText}`}>Phone</p>
-                  <p className="font-semibold">{selectedEmployee.phone}</p>
-                </div>
-
-                <div className={`rounded-xl border p-3 ${darkMode ? "border-slate-800 bg-slate-950/30" : "border-slate-200 bg-slate-50"}`}>
-                  <p className={`text-xs ${subText}`}>Status</p>
-                  <p className="font-semibold">{selectedEmployee.status}</p>
-                </div>
-
-                <div className={`rounded-xl border p-3 ${darkMode ? "border-slate-800 bg-slate-950/30" : "border-slate-200 bg-slate-50"}`}>
-                  <p className={`text-xs ${subText}`}>DOB</p>
-                  <p className="font-semibold">{selectedEmployee.dob ? toDateInput(selectedEmployee.dob) : "—"}</p>
-                </div>
-
-                <div className={`rounded-xl border p-3 ${darkMode ? "border-slate-800 bg-slate-950/30" : "border-slate-200 bg-slate-50"}`}>
-                  <p className={`text-xs ${subText}`}>Gender / Marital</p>
-                  <p className="font-semibold">
-                    {selectedEmployee.gender || "—"} / {selectedEmployee.maritalStatus || "—"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 flex gap-2">
-                <button
-                  onClick={() => {
-                    closeView();
-                    openEdit(selectedEmployee);
-                  }}
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2"
-                >
-                  <Pencil className="w-4 h-4" />
-                  Edit
-                </button>
-                <button
-                  onClick={closeView}
-                  className={`flex-1 py-2.5 rounded-xl border ${
-                    darkMode ? "border-slate-700 hover:bg-slate-800" : "border-slate-200 hover:bg-slate-50"
-                  }`}
-                >
-                  Close
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* ========================= */}
-      {/* DELETE EMPLOYEE MODAL     */}
-      {/* ========================= */}
-      <AnimatePresence>
-        {showDelete && selectedEmployee && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center px-4 z-50">
-            <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              className={`w-full max-w-sm rounded-2xl p-6 shadow-xl ${darkMode ? "bg-slate-900 text-white" : "bg-white text-slate-900"}`}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">Delete Employee</h3>
-                <button onClick={closeDelete}>
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <p className={`text-sm ${subText}`}>
-                Are you sure you want to delete <span className="font-semibold">{selectedEmployee.name}</span>? This action cannot be undone.
-              </p>
-
-              <div className="mt-5 flex gap-2">
-                <button
-                  onClick={closeDelete}
-                  className={`flex-1 py-2 rounded-xl border ${
-                    darkMode ? "border-slate-700 hover:bg-slate-800" : "border-slate-200 hover:bg-slate-50"
-                  }`}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={deleteEmployee}
-                  disabled={deletingEmployee}
-                  className="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-70 flex items-center justify-center gap-2"
-                >
-                  {deletingEmployee ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                  {deletingEmployee ? "Deleting..." : "Delete"}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+      <EmployeeModal show={showTaskModal && taskEmployee} title="Assign Task" darkMode={darkMode} textColor={textColor} borderColor={borderColor} onClose={() => setShowTaskModal(false)} onSave={assignTask} saving={savingTask} saveText="Assign Task">
+        <div className="space-y-4">
+          <input className={`${inputBase} ${inputTheme}`} placeholder="Task title" value={taskForm.title} onChange={(e) => setTaskForm((p) => ({ ...p, title: e.target.value }))} />
+          <textarea className={`${inputBase} ${inputTheme}`} rows={4} placeholder="Description" value={taskForm.description} onChange={(e) => setTaskForm((p) => ({ ...p, description: e.target.value }))} />
+          <select className={`${inputBase} ${inputTheme}`} value={taskForm.priority} onChange={(e) => setTaskForm((p) => ({ ...p, priority: e.target.value }))}>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </EmployeeModal>
+    </div>
   );
 };
+
+function EmployeeModal({ show, title, children, darkMode, textColor, borderColor, onClose, onSave, saving, saveText, hideSave }) {
+  if (!show) return null;
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <div className="absolute inset-0 flex items-center justify-center px-4 overflow-y-auto">
+          <div onClick={(e) => e.stopPropagation()} className={`w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden my-8 ${darkMode ? "bg-slate-900" : "bg-white"}`}>
+            <div className={`px-6 py-5 border-b ${borderColor} flex items-center justify-between`}>
+              <h3 className={`text-xl font-bold ${textColor}`}>{title}</h3>
+              <button onClick={onClose}><X className="w-5 h-5" /></button>
+            </div>
+
+            <div className={`max-h-[70vh] overflow-y-auto px-6 py-5 ${textColor}`}>
+              {children}
+            </div>
+
+            {!hideSave && (
+              <div className={`px-6 py-4 border-t flex gap-3 ${borderColor}`}>
+                <button onClick={onClose} className={`flex-1 px-4 py-2.5 rounded-xl border ${borderColor} ${textColor}`}>Cancel</button>
+                <button onClick={onSave} disabled={saving} className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-2.5 rounded-xl flex items-center justify-center gap-2 disabled:opacity-70">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {saving ? "Saving..." : saveText}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </AnimatePresence>
+  );
+}
 
 export default EmployeeList;

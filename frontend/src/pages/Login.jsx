@@ -1,7 +1,21 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useUserAuth } from "../context/AuthContext";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ChevronRight,
+  Shield,
+  Users,
+  Clock,
+  Award,
+  Sparkles,
+  CheckCircle,
+} from "lucide-react";
 
 const API_BASE = "http://localhost:5000";
 
@@ -13,6 +27,7 @@ const Login = () => {
     () => ({
       primary: "#0d9488",
       primaryDark: "#0f766e",
+      primaryLight: "#14b8a6",
       ring: "focus:ring-teal-400",
     }),
     []
@@ -27,6 +42,7 @@ const Login = () => {
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState(null);
 
   // load remembered email
   useEffect(() => {
@@ -64,18 +80,14 @@ const Login = () => {
         return;
       }
 
-      // remember email
       if (remember) localStorage.setItem("ems_email", email.trim());
       else localStorage.removeItem("ems_email");
 
-      // ✅ save auth for protected routes
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      // ✅ set context
       login(data.user);
 
-      // ✅ role based redirect
       const role = String(data?.user?.role || "").toLowerCase().trim();
 
       if (role === "admin") {
@@ -100,19 +112,69 @@ const Login = () => {
     }
   };
 
+  const features = [
+    { icon: Shield, text: "Secure role-based access (Admin / Employee)", color: "#10b981" },
+    { icon: Users, text: "Fast dashboard view + quick actions", color: "#3b82f6" },
+    { icon: Clock, text: "Real-time attendance tracking", color: "#f59e0b" },
+    { icon: Award, text: "Modern UI with clear, readable forms", color: "#8b5cf6" },
+  ];
+
   return (
     <div className="min-h-screen w-full relative overflow-hidden">
-      {/* background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-teal-700 via-teal-600 to-gray-100" />
-      <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-white/15 blur-2xl" />
-      <div className="absolute top-24 -right-24 h-80 w-80 rounded-full bg-white/10 blur-2xl" />
-      <div className="absolute bottom-[-140px] left-[15%] h-96 w-96 rounded-full bg-black/10 blur-3xl" />
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-teal-700 via-teal-600 to-cyan-700" />
+      
+      {/* Animated Particles */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: [0, 0.5, 0], scale: [0, 1, 2] }}
+            transition={{
+              duration: Math.random() * 5 + 3,
+              repeat: Infinity,
+              delay: Math.random() * 5,
+            }}
+            style={{
+              position: "absolute",
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              width: `${Math.random() * 100 + 50}px`,
+              height: `${Math.random() * 100 + 50}px`,
+              borderRadius: "50%",
+              background: `radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Floating Shapes */}
+      <div className="absolute top-20 left-10 animate-float" style={{ animationDuration: "8s" }}>
+        <div className="w-20 h-20 rounded-full bg-white/5 backdrop-blur-sm border border-white/10" />
+      </div>
+      <div className="absolute bottom-20 right-10 animate-float" style={{ animationDuration: "10s", animationDelay: "2s" }}>
+        <div className="w-32 h-32 rounded-full bg-white/5 backdrop-blur-sm border border-white/10" />
+      </div>
+      <div className="absolute top-1/2 left-1/4 animate-float" style={{ animationDuration: "12s", animationDelay: "4s" }}>
+        <div className="w-16 h-16 rounded-full bg-white/5 backdrop-blur-sm border border-white/10" />
+      </div>
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-          {/* left info panel */}
-          <div className="hidden lg:flex rounded-3xl border border-white/15 bg-white/10 backdrop-blur-xl shadow-2xl p-10 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch"
+        >
+          {/* Left Info Panel */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="hidden lg:flex rounded-3xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-2xl p-10 relative overflow-hidden"
+          >
+            <div className="absolute inset-0 opacity-30">
               <div className="absolute top-10 left-10 h-28 w-28 rounded-3xl border border-white/30" />
               <div className="absolute top-40 right-14 h-20 w-20 rounded-2xl border border-white/25" />
               <div className="absolute bottom-16 left-20 h-24 w-24 rounded-full border border-white/20" />
@@ -120,40 +182,66 @@ const Login = () => {
 
             <div className="relative z-10 flex flex-col justify-between w-full">
               <div>
-                <div className="inline-flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center">
-                    <span className="text-white font-black text-lg">EMS</span>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                  className="inline-flex items-center gap-3"
+                >
+                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-white/20 to-white/5 border border-white/30 flex items-center justify-center backdrop-blur-sm">
+                    <Sparkles className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-extrabold text-white leading-tight">
-                      Employee Management System
+                    <h1 className="text-3xl font-extrabold text-white leading-tight">
+                      EMS Portal
                     </h1>
                     <p className="text-white/80 text-sm mt-1">
-                      Login to manage attendance, salary, departments & more.
+                      Employee Management System
                     </p>
                   </div>
-                </div>
+                </motion.div>
 
-                <div className="mt-10 space-y-4">
-                  <FeatureRow text="Secure role-based access (Admin / Employee)" />
-                  <FeatureRow text="Fast dashboard view + quick actions" />
-                  <FeatureRow text="Modern UI with clear, readable forms" />
+                <div className="mt-12 space-y-4">
+                  {features.map((feature, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4 + index * 0.1 }}
+                      className="flex items-start gap-3 group cursor-pointer"
+                    >
+                      <div className="mt-1 p-1.5 rounded-lg bg-white/10 border border-white/20 group-hover:bg-white/20 transition-all">
+                        <feature.icon className="w-4 h-4 text-white" />
+                      </div>
+                      <p className="text-white/90 text-sm leading-relaxed group-hover:text-white transition-colors">
+                        {feature.text}
+                      </p>
+                    </motion.div>
+                  ))}
                 </div>
               </div>
 
-              <div className="mt-10 text-white/80 text-sm">
-                <p className="font-semibold text-white">Tip:</p>
-                <p className="mt-1">
-                  Use your organisation email and password. If you forgot access, contact the system admin.
-                </p>
-              </div>
+              
             </div>
-          </div>
+          </motion.div>
 
-          {/* right login card */}
-          <div className="rounded-3xl border border-white/10 bg-white/95 shadow-2xl overflow-hidden">
-            <div className="p-7 sm:p-10">
+          {/* Right Login Card */}
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="rounded-3xl border border-white/20 bg-white/95 backdrop-blur-sm shadow-2xl overflow-hidden"
+          >
+            <div className="p-8 sm:p-10">
               <div className="lg:hidden mb-6 text-center">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200 }}
+                  className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 mb-4"
+                >
+                  <Sparkles className="w-8 h-8 text-white" />
+                </motion.div>
                 <h2 className="text-2xl font-extrabold text-gray-900">
                   Employee Management System
                 </h2>
@@ -162,179 +250,191 @@ const Login = () => {
 
               <div className="flex items-start justify-between gap-4 mb-6">
                 <div>
-                  <h3 className="text-2xl font-extrabold text-gray-900">Login</h3>
+                  <motion.h3
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-3xl font-extrabold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent"
+                  >
+                    Welcome Back
+                  </motion.h3>
                   <p className="text-gray-600 text-sm mt-1">
-                    Welcome back — please enter your details.
+                    Please enter your credentials
                   </p>
                 </div>
 
-                <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-2xl bg-teal-50 border border-teal-100">
-                  <span className="h-2.5 w-2.5 rounded-full bg-teal-500" />
-                  <span className="text-xs font-semibold text-teal-800">Online Portal</span>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-2xl bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100"
+                >
+                  <div className="relative">
+                    <span className="absolute inline-flex h-2 w-2 rounded-full bg-teal-500 animate-ping" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-500" />
+                  </div>
+                  <span className="text-xs font-semibold text-teal-800">Live Portal</span>
+                </motion.div>
               </div>
 
-              {error ? (
-                <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
-                  <p className="text-sm text-red-700 font-medium">{error}</p>
-                </div>
-              ) : null}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="mb-5 rounded-2xl border border-red-200 bg-gradient-to-r from-red-50 to-red-100 px-4 py-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-8 bg-red-500 rounded-full" />
+                      <p className="text-sm text-red-700 font-medium">{error}</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Email */}
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Email Field */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800">Email</label>
-                  <div className="mt-2 relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <MailIcon />
-                    </span>
-
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative group">
+                    <div className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${focusedField === "email" ? "text-teal-500" : "text-gray-400"}`}>
+                      <Mail className="w-5 h-5" />
+                    </div>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="employee@ems.com"
-                      className={`w-full rounded-2xl border border-gray-200 bg-white px-10 py-3 text-gray-900 outline-none transition focus:ring-4 ${THEME.ring} focus:border-teal-300`}
+                      onFocus={() => setFocusedField("email")}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder="employee@company.com"
+                      className={`w-full rounded-2xl border-2 bg-white pl-12 pr-4 py-3.5 text-gray-900 outline-none transition-all duration-200
+                        ${focusedField === "email" 
+                          ? "border-teal-400 shadow-lg shadow-teal-500/20" 
+                          : "border-gray-200 hover:border-gray-300"
+                        } focus:ring-4 ${THEME.ring} focus:border-teal-300`}
                       autoComplete="email"
                     />
                   </div>
                 </div>
 
-                {/* Password */}
+                {/* Password Field */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800">Password</label>
-                  <div className="mt-2 relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <LockIcon />
-                    </span>
-
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    Password
+                  </label>
+                  <div className="relative group">
+                    <div className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${focusedField === "password" ? "text-teal-500" : "text-gray-400"}`}>
+                      <Lock className="w-5 h-5" />
+                    </div>
                     <input
                       type={showPass ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      onFocus={() => setFocusedField("password")}
+                      onBlur={() => setFocusedField(null)}
                       placeholder="••••••••"
-                      className={`w-full rounded-2xl border border-gray-200 bg-white px-10 py-3 pr-24 text-gray-900 outline-none transition focus:ring-4 ${THEME.ring} focus:border-teal-300`}
+                      className={`w-full rounded-2xl border-2 bg-white pl-12 pr-24 py-3.5 text-gray-900 outline-none transition-all duration-200
+                        ${focusedField === "password" 
+                          ? "border-teal-400 shadow-lg shadow-teal-500/20" 
+                          : "border-gray-200 hover:border-gray-300"
+                        } focus:ring-4 ${THEME.ring} focus:border-teal-300`}
                       autoComplete="current-password"
                     />
-
                     <button
                       type="button"
-                      onClick={() => setShowPass((p) => !p)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100"
+                      onClick={() => setShowPass(!showPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 transition-all"
                     >
-                      {showPass ? "HIDE" : "SHOW"}
+                      {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
 
-                {/* Remember + forgot */}
-                <div className="flex items-center justify-between gap-3 pt-1">
-                  <label className="flex items-center gap-2 text-sm text-gray-700 select-none">
-                    <input
-                      type="checkbox"
-                      checked={remember}
-                      onChange={(e) => setRemember(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                    />
-                    Remember me
+                {/* Remember & Forgot */}
+                <div className="flex items-center justify-between gap-3 pt-2">
+                  <label className="flex items-center gap-2 text-sm text-gray-700 select-none cursor-pointer group">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={remember}
+                        onChange={(e) => setRemember(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                      />
+                    </div>
+                    <span className="group-hover:text-gray-900 transition-colors">Remember me</span>
                   </label>
 
                   <button
                     type="button"
-                    className="text-sm font-semibold text-teal-700 hover:text-teal-900 hover:underline"
-                    onClick={() => setError("Forgot password is not wired yet.")}
+                    className="text-sm font-semibold text-teal-700 hover:text-teal-900 hover:underline transition-all flex items-center gap-1"
+                    onClick={() => setError("Please contact your system administrator to reset your password.")}
                   >
                     Forgot password?
+                    <ChevronRight className="w-3 h-3" />
                   </button>
                 </div>
 
-                {/* Login button */}
-                <button
+                {/* Login Button */}
+                <motion.button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-2xl py-3 font-extrabold text-white shadow-lg transition active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed"
+                  whileHover={{ scale: loading ? 1 : 1.02 }}
+                  whileTap={{ scale: loading ? 1 : 0.98 }}
+                  className="w-full rounded-2xl py-3.5 font-extrabold text-white shadow-lg transition-all duration-200 relative overflow-hidden group"
                   style={{
-                    background: `linear-gradient(90deg, ${THEME.primary}, ${THEME.primaryDark})`,
+                    background: `linear-gradient(135deg, ${THEME.primary}, ${THEME.primaryDark})`,
                   }}
                 >
-                  {loading ? "Signing in..." : "Login"}
-                </button>
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                  {loading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Signing in...
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2">
+                      <Sparkles className="w-5 h-5" />
+                      Login to Dashboard
+                    </div>
+                  )}
+                </motion.button>
 
-                <div className="pt-2 text-center">
+                <div className="pt-4 text-center">
                   <p className="text-xs text-gray-500">
-                    By signing in, you agree to your organisation’s policies.
+                    By signing in, you agree to your organisation's policies and terms of service.
                   </p>
                 </div>
               </form>
             </div>
 
-            <div className="px-7 sm:px-10 py-4 bg-gray-50 border-t border-gray-100">
-              <p className="text-xs text-gray-500">
-                © {new Date().getFullYear()} EMS • Secure Employee Portal
-              </p>
+            <div className="px-8 sm:px-10 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-600">
+                  © {new Date().getFullYear()} EMS • Secure Employee Portal
+                </p>
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-xs text-gray-500">System Online</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
+
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 };
 
 export default Login;
-
-/* -------------------- Small Components / Icons -------------------- */
-
-function FeatureRow({ text }) {
-  return (
-    <div className="flex items-start gap-3">
-      <span className="mt-1 h-5 w-5 rounded-full bg-white/20 border border-white/25 flex items-center justify-center">
-        <span className="h-2 w-2 rounded-full bg-white" />
-      </span>
-      <p className="text-white/90 text-sm leading-relaxed">{text}</p>
-    </div>
-  );
-}
-
-function MailIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M4 7.5C4 6.12 5.12 5 6.5 5h11C18.88 5 20 6.12 20 7.5v9c0 1.38-1.12 2.5-2.5 2.5h-11C5.12 19 4 17.88 4 16.5v-9Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        opacity="0.9"
-      />
-      <path
-        d="M6.5 7.5 12 11.5l5.5-4"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function LockIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M7 11V8.7C7 6.1 9.1 4 11.7 4h.6C14.9 4 17 6.1 17 8.7V11"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M7.5 11h9c1.1 0 2 .9 2 2v5.5c0 1.1-.9 2-2 2h-9c-1.1 0-2-.9-2-2V13c0-1.1.9-2 2-2Z"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-      <path
-        d="M12 15.2v2.2"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}

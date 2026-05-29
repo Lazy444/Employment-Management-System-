@@ -1,6 +1,9 @@
 // controllers/attendanceController.js
 import Attendance from "../models/Attendance.js";
 
+const OFFICE_START_HOUR = 9;  // 9:00 AM
+const OFFICE_END_HOUR = 17;   // 5:00 PM
+
 const toWorkDate = (d = new Date()) => {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -8,17 +11,56 @@ const toWorkDate = (d = new Date()) => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
+const getOfficeWindow = (date = new Date()) => {
+  const start = new Date(date);
+  start.setHours(OFFICE_START_HOUR, 0, 0, 0);
+
+  const end = new Date(date);
+  end.setHours(OFFICE_END_HOUR, 0, 0, 0);
+
+  return { start, end };
+};
+
+const calculateOfficeMinutes = (punchedInAt, punchedOutAt) => {
+  const inTime = new Date(punchedInAt);
+  const outTime = new Date(punchedOutAt);
+
+  const { start: officeStart, end: officeEnd } = getOfficeWindow(inTime);
+
+  const effectiveStart = inTime > officeStart ? inTime : officeStart;
+  const effectiveEnd = outTime < officeEnd ? outTime : officeEnd;
+
+  const diffMs = effectiveEnd.getTime() - effectiveStart.getTime();
+
+  if (diffMs <= 0) return 0;
+
+  return Math.floor(diffMs / 60000);
+};
+
 // POST /api/attendance/punch-in
 export const punchIn = async (req, res) => {
   try {
     const employeeId = req.user?.id;
-    if (!employeeId) return res.status(401).json({ ok: false, message: "Unauthorized" });
+    if (!employeeId) {
+      return res.status(401).json({ ok: false, message: "Unauthorized" });
+    }
 
     const now = new Date();
     const workDate = toWorkDate(now);
+    const { end: officeEnd } = getOfficeWindow(now);
 
-    // ✅ Only once per day
-    const todayRecord = await Attendance.findOne({ employee: employeeId, workDate }).lean();
+    if (now >= officeEnd) {
+      return res.status(400).json({
+        ok: false,
+        message: "Punch in is only allowed before 5:00 PM",
+      });
+    }
+
+    const todayRecord = await Attendance.findOne({
+      employee: employeeId,
+      workDate,
+    }).lean();
+
     if (todayRecord) {
       return res.status(409).json({
         ok: false,
@@ -38,7 +80,11 @@ export const punchIn = async (req, res) => {
 
     return res.status(201).json({ ok: true, attendance: created });
   } catch (e) {
-    return res.status(500).json({ ok: false, message: "Punch in failed", error: e?.message });
+    return res.status(500).json({
+      ok: false,
+      message: "Punch in failed",
+      error: e?.message,
+    });
   }
 };
 
@@ -46,12 +92,13 @@ export const punchIn = async (req, res) => {
 export const punchOut = async (req, res) => {
   try {
     const employeeId = req.user?.id;
-    if (!employeeId) return res.status(401).json({ ok: false, message: "Unauthorized" });
+    if (!employeeId) {
+      return res.status(401).json({ ok: false, message: "Unauthorized" });
+    }
 
     const now = new Date();
     const workDate = toWorkDate(now);
 
-    // ✅ find today's record (must exist and must not already be punched out)
     const today = await Attendance.findOne({
       employee: employeeId,
       workDate,
@@ -72,17 +119,24 @@ export const punchOut = async (req, res) => {
       });
     }
 
-    const diffMs = now.getTime() - new Date(today.punchedInAt).getTime();
-    const totalMinutes = Math.max(0, Math.floor(diffMs / 60000));
+    const totalMinutes = calculateOfficeMinutes(today.punchedInAt, now);
 
     today.punchedOutAt = now;
     today.totalMinutes = totalMinutes;
     today.status = "OUT";
     await today.save();
 
-    return res.json({ ok: true, attendance: today });
+    return res.json({
+      ok: true,
+      attendance: today,
+      officeHours: "09:00 AM to 05:00 PM",
+    });
   } catch (e) {
-    return res.status(500).json({ ok: false, message: "Punch out failed", error: e?.message });
+    return res.status(500).json({
+      ok: false,
+      message: "Punch out failed",
+      error: e?.message,
+    });
   }
 };
 
@@ -90,17 +144,27 @@ export const punchOut = async (req, res) => {
 export const myToday = async (req, res) => {
   try {
     const employeeId = req.user?.id;
-    if (!employeeId) return res.status(401).json({ ok: false, message: "Unauthorized" });
+    if (!employeeId) {
+      return res.status(401).json({ ok: false, message: "Unauthorized" });
+    }
 
     const workDate = toWorkDate(new Date());
 
-    // ✅ should be max 1 record/day (because of unique index)
     const records = await Attendance.find({ employee: employeeId, workDate })
       .sort({ punchedInAt: -1 })
       .lean();
 
-    return res.json({ ok: true, workDate, records });
+    return res.json({
+      ok: true,
+      workDate,
+      officeHours: "09:00 AM to 05:00 PM",
+      records,
+    });
   } catch (e) {
-    return res.status(500).json({ ok: false, message: "Fetch failed", error: e?.message });
+    return res.status(500).json({
+      ok: false,
+      message: "Fetch failed",
+      error: e?.message,
+    });
   }
 };
